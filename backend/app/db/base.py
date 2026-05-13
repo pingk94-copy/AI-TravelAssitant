@@ -5,4 +5,5 @@ class Base(DeclarativeBase):
     pass
 
 
+from app.models.chat import ChatMessage, ChatSession  # noqa: E402,F401
 from app.models.user import User  # noqa: E402,F401

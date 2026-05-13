@@ -117,6 +117,9 @@ npm run build
 
 ---
 
+
+
+
 ## Round 2 - 用户认证系统
 
 ### 本轮目标
@@ -400,6 +403,10 @@ npm run build
 5. 根据用户 ID 查询数据库。
 6. 查询成功后返回当前用户信息。
 
+
+
+
+
 ### 本轮调试记录
 
 第一次安装 `requirements.txt` 时命令超时，随后检查发现：
@@ -490,3 +497,27 @@ npm run build
 5. 给需要登录的页面预留路由守卫。
 
 完成这一步后，项目就会有真正的前后端登录闭环。
+
+---
+
+## Round 3 - 聊天基础功能
+
+### 新增/修改文件及作用
+
+1. `docs/superpowers/plans/2026-05-14-chat-foundation.md`：第三阶段实施计划，记录聊天基础功能的任务拆分。
+2. `backend/tests/test_chat.py`：聊天接口测试，覆盖创建会话、按用户隔离会话、SSE 回复和消息持久化。
+3. `backend/app/models/chat.py`：新增 `ChatSession` 和 `ChatMessage` ORM 模型，对应会话表和消息表。
+4. `backend/app/schemas/chat.py`：聊天模块 Pydantic 入参/出参模型。
+5. `backend/app/services/chat_service.py`：聊天业务逻辑，负责会话查询、消息保存和当前阶段的模拟助手回复。
+6. `backend/app/api/routes/chat.py`：聊天接口路由，提供会话创建、会话列表、消息列表和 SSE 流式回复接口。
+7. `backend/app/db/base.py`：注册聊天模型，确保自动建表时包含 `chat_sessions` 和 `chat_messages`。
+8. `backend/app/main.py`：注册聊天路由到 FastAPI 应用。
+9. `frontend/src/api/http.ts`：前端通用 API 请求封装。
+10. `frontend/src/api/chat.ts`：前端聊天 API 封装，包含会话接口、消息接口和 SSE 读取逻辑。
+11. `frontend/src/stores/app.ts`：扩展 token/user 状态，为聊天接口调用预留认证信息。
+12. `frontend/src/views/ChatView.vue`：将聊天占位页改为可创建会话、发送消息、显示流式回复的页面。
+
+### 验证
+
+1. `cd backend && python -m pytest`
+2. `cd frontend && npm run build`
