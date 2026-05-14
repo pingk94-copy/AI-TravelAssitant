@@ -521,3 +521,24 @@ npm run build
 
 1. `cd backend && python -m pytest`
 2. `cd frontend && npm run build`
+
+---
+
+## Round 4 - 旅行工具封装
+
+### 新增/修改文件及作用
+
+1. `docs/superpowers/plans/2026-05-14-travel-tools.md`：第四阶段实施计划，记录旅行工具接口的任务拆分。
+2. `backend/tests/test_tools.py`：旅行工具接口测试，覆盖地点搜索、天气查询、路线规划和未登录拦截。
+3. `backend/app/schemas/tools.py`：旅行工具请求和响应模型。
+4. `backend/app/tools/__init__.py`：旅行工具包初始化文件。
+5. `backend/app/tools/amap_client.py`：高德 Web 服务 API 客户端，封装地点、天气、路线请求。
+6. `backend/app/services/travel_tool_service.py`：旅行工具业务层，统一高德结果格式，并在无 API Key 时返回 fallback。
+7. `backend/app/api/routes/tools.py`：旅行工具路由，提供 `/api/tools/places/search`、`/api/tools/weather`、`/api/tools/routes`。
+8. `backend/app/core/config.py`：新增高德 API Key、基础地址和外部 API 超时配置。
+9. `backend/app/main.py`：注册旅行工具路由到 FastAPI 应用。
+
+### 验证
+
+1. `cd backend && python -m pytest`
+2. `cd frontend && npm run build`

@@ -10,6 +10,9 @@ class Settings(BaseSettings):
     jwt_secret_key: str = "change-this-development-secret"
     jwt_algorithm: str = "HS256"
     access_token_expire_minutes: int = 60 * 24
+    amap_api_key: str = ""
+    amap_base_url: str = "https://restapi.amap.com/v3"
+    external_api_timeout_seconds: float = 5.0
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 
