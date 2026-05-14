@@ -2,9 +2,9 @@
 import { CalendarDays, CloudSun, Hotel, MapPinned, SendHorizontal } from 'lucide-vue-next'
 
 const capabilityCards = [
-  { title: 'Weather-aware planning', text: 'Query destination weather before arranging outdoor routes.', icon: CloudSun },
-  { title: 'POI search', text: 'Collect attractions, nearby areas, and route anchors from map tools.', icon: MapPinned },
-  { title: 'Stay strategy', text: 'Recommend practical hotel areas before real booking APIs are added.', icon: Hotel },
+  { title: '天气辅助规划', text: '先查询目的地天气，再安排户外景点、室内备选和每日节奏。', icon: CloudSun },
+  { title: '景点与路线检索', text: '通过地图工具收集景点、周边区域和路线锚点，为 Agent 规划提供依据。', icon: MapPinned },
+  { title: '住宿区域建议', text: '在接入真实酒店预订前，先给出适合落脚的商圈和通勤策略。', icon: Hotel },
 ]
 </script>
 
@@ -14,22 +14,22 @@ const capabilityCards = [
       <div class="max-w-2xl">
         <p class="mb-5 inline-flex items-center gap-2 rounded bg-white/10 px-3 py-1 text-sm text-[#d9ead5]">
           <CalendarDays :size="16" />
-          Phase 1 skeleton
+          可交互演示版
         </p>
         <h1 class="max-w-3xl text-4xl font-semibold leading-tight md:text-6xl">
-          Build the travel assistant around real planning workflows.
+          用 AI Agent 把旅行想法拆成可执行的行程方案。
         </h1>
       </div>
 
       <form class="mt-10 grid gap-3 rounded bg-[#f8f5ed] p-3 text-[#17201a] md:grid-cols-[1fr_auto]">
         <input
           class="min-h-12 rounded border border-[#d9d0bd] bg-white px-4 outline-none focus:border-[#1d3b2a]"
-          placeholder="Plan a 3-day relaxed trip from Shanghai to Hangzhou"
+          placeholder="帮我规划上海出发去杭州的 3 天游玩路线，节奏轻松一点"
           type="text"
         />
         <button class="inline-flex min-h-12 items-center justify-center gap-2 rounded bg-[#c75532] px-5 font-semibold text-white">
           <SendHorizontal :size="18" />
-          Start
+          开始规划
         </button>
       </form>
     </section>

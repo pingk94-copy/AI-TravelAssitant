@@ -14,7 +14,7 @@ const password = ref('StrongPass123')
 const errorMessage = ref('')
 const isSubmitting = ref(false)
 
-const title = computed(() => (mode.value === 'login' ? 'Sign in' : 'Create account'))
+const title = computed(() => (mode.value === 'login' ? '登录账号' : '创建账号'))
 
 async function submitAuth() {
   isSubmitting.value = true
@@ -35,7 +35,7 @@ async function submitAuth() {
     }
     await router.push('/trips')
   } catch (error) {
-    errorMessage.value = error instanceof Error ? error.message : 'Authentication failed.'
+    errorMessage.value = error instanceof Error ? error.message : '认证失败，请检查账号信息后重试。'
   } finally {
     isSubmitting.value = false
   }
@@ -45,12 +45,12 @@ async function submitAuth() {
 <template>
   <main class="mx-auto grid min-h-[calc(100vh-73px)] max-w-7xl items-center px-5 py-10 lg:grid-cols-[0.9fr_1.1fr]">
     <section class="hidden pr-10 lg:block">
-      <p class="mb-4 text-sm font-semibold uppercase tracking-[0.18em] text-[#c75532]">Account</p>
+      <p class="mb-4 text-sm font-semibold tracking-[0.18em] text-[#c75532]">账号中心</p>
       <h1 class="text-5xl font-semibold leading-tight">
-        Keep every chat, tool query, and itinerary tied to your own workspace.
+        让每一次对话、工具查询和行程规划都沉淀到你的专属工作区。
       </h1>
       <p class="mt-5 max-w-xl text-sm leading-7 text-[#5e675b]">
-        登录后，聊天记录、行程规划和后续收藏能力都会和当前用户绑定。
+        登录后，聊天记录、行程规划和后续收藏能力都会与当前用户绑定，方便继续追踪和复盘。
       </p>
     </section>
 
@@ -62,7 +62,7 @@ async function submitAuth() {
           type="button"
           @click="mode = 'login'"
         >
-          Login
+          登录
         </button>
         <button
           class="flex-1 rounded px-4 py-2 text-sm font-semibold"
@@ -70,7 +70,7 @@ async function submitAuth() {
           type="button"
           @click="mode = 'register'"
         >
-          Register
+          注册
         </button>
       </div>
 
@@ -78,15 +78,15 @@ async function submitAuth() {
 
       <form class="mt-6 grid gap-4" @submit.prevent="submitAuth">
         <label v-if="mode === 'register'" class="grid gap-2 text-sm font-medium">
-          Username
+          用户名
           <input v-model="username" class="auth-input" type="text" />
         </label>
         <label class="grid gap-2 text-sm font-medium">
-          Email
+          邮箱
           <input v-model="email" class="auth-input" type="email" />
         </label>
         <label class="grid gap-2 text-sm font-medium">
-          Password
+          密码
           <input v-model="password" class="auth-input" type="password" />
         </label>
 

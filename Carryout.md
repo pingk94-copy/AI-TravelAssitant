@@ -4,6 +4,35 @@
 
 ---
 
+## Round 11 - 前端全中文化
+
+### 本轮主要目的
+
+把核心前端页面改为中文界面，并让本地演示生成的聊天回复、行程内容尽量保持中文，避免页面出现大段英文。
+
+### 新增/修改文件及作用
+
+1. `frontend/scripts/check-chinese-ui.mjs`：新增中文化检查脚本，防止核心页面再次出现明显英文文案。
+2. `frontend/package.json`：新增 `npm run test:i18n` 命令。
+3. `frontend/src/App.vue`：导航栏、项目标题、登录入口改为中文。
+4. `frontend/src/views/DashboardView.vue`：首页标题、能力卡片、输入提示和按钮改为中文。
+5. `frontend/src/views/AuthView.vue`：登录/注册页全部改为中文，并清理旧乱码文案。
+6. `frontend/src/views/ChatView.vue`：聊天页标题、按钮、占位提示和错误提示改为中文。
+7. `frontend/src/views/TripsView.vue`：行程规划页表单、任务状态、空状态和结果标题改为中文。
+8. `backend/app/services/chat_service.py`：本地模拟 AI 回复改为中文。
+9. `backend/app/services/trip_service.py`：行程标题和错误提示改为中文。
+10. `backend/app/agents/planner_agent.py`：行程摘要、每日主题、日程描述和提醒改为中文。
+11. `backend/app/agents/search_agents.py`：景点搜索兜底关键词改为中文。
+12. `backend/app/services/travel_tool_service.py`：地图、天气、路线兜底提示改为中文。
+
+### 验证
+
+1. `cd frontend && npm run test:i18n`
+2. `cd frontend && npm run build`
+3. `cd backend && python -m pytest`
+
+---
+
 
 ## Round 1 - 全栈项目骨架
 

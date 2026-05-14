@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite --host 127.0.0.1 --port 5173",
+    "test:i18n": "node scripts/check-chinese-ui.mjs",
     "build": "tsc && vite build",
     "preview": "vite preview"
   },

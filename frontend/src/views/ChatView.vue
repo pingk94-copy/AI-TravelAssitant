@@ -16,8 +16,8 @@ const appStore = useAppStore()
 const sessions = ref<ChatSession[]>([])
 const activeSession = ref<ChatSession | null>(null)
 const messages = ref<ChatMessage[]>([])
-const draft = ref('Plan a slow trip to Hangzhou')
-const sessionTitle = ref('New travel chat')
+const draft = ref('帮我规划一次杭州慢旅行')
+const sessionTitle = ref('新的旅行对话')
 const isStreaming = ref(false)
 const errorMessage = ref('')
 
@@ -37,7 +37,7 @@ async function selectSession(session: ChatSession) {
 
 async function startSession() {
   if (!appStore.token) {
-    errorMessage.value = 'Please log in before starting a chat session.'
+    errorMessage.value = '请先登录，再开始新的旅行对话。'
     return
   }
 
@@ -74,7 +74,7 @@ async function sendMessage() {
     })
     messages.value = await listChatMessages(appStore.token, activeSession.value.id)
   } catch (error) {
-    errorMessage.value = error instanceof Error ? error.message : 'Failed to stream chat reply.'
+    errorMessage.value = error instanceof Error ? error.message : 'AI 回复生成失败，请稍后重试。'
   } finally {
     isStreaming.value = false
   }
@@ -82,7 +82,7 @@ async function sendMessage() {
 
 onMounted(() => {
   refreshSessions().catch((error) => {
-    errorMessage.value = error instanceof Error ? error.message : 'Failed to load chat sessions.'
+    errorMessage.value = error instanceof Error ? error.message : '会话列表加载失败，请刷新页面重试。'
   })
 })
 </script>
@@ -90,7 +90,7 @@ onMounted(() => {
 <template>
   <main class="mx-auto grid max-w-7xl gap-5 px-5 py-8 lg:grid-cols-[300px_1fr]">
     <aside class="border border-[#d9d0bd] bg-[#f8f5ed] p-5">
-      <h1 class="text-lg font-semibold">Chat Sessions</h1>
+      <h1 class="text-lg font-semibold">旅行会话</h1>
 
       <div class="mt-5 grid gap-3">
         <input
@@ -104,7 +104,7 @@ onMounted(() => {
           @click="startSession"
         >
           <MessageSquarePlus :size="17" />
-          New Session
+          新建会话
         </button>
       </div>
 
@@ -128,13 +128,13 @@ onMounted(() => {
 
     <section class="flex min-h-[620px] flex-col border border-[#d9d0bd] bg-white">
       <div class="border-b border-[#d9d0bd] p-5">
-        <h2 class="text-xl font-semibold">{{ activeSession?.title ?? 'AI Travel Chat' }}</h2>
-        <p class="mt-1 text-sm text-[#5e675b]">SSE stream is connected to the FastAPI chat endpoint.</p>
+        <h2 class="text-xl font-semibold">{{ activeSession?.title ?? 'AI 旅行对话' }}</h2>
+        <p class="mt-1 text-sm text-[#5e675b]">通过 SSE 流式接收 FastAPI 后端返回的 AI 回复。</p>
       </div>
 
       <div class="flex-1 space-y-4 overflow-y-auto p-5">
         <div v-if="!activeSession" class="flex h-full items-center justify-center text-center text-[#5e675b]">
-          Create a session to start chatting.
+          先新建一个会话，就可以开始和 AI 讨论旅行计划。
         </div>
 
         <article
@@ -160,7 +160,7 @@ onMounted(() => {
           v-model="draft"
           :disabled="!activeSession || isStreaming"
           class="h-12 rounded border border-[#d9d0bd] bg-white px-4 outline-none focus:border-[#1d3b2a] disabled:bg-[#eee8dc]"
-          placeholder="Ask for travel ideas..."
+          placeholder="输入你的旅行想法，例如：杭州两日慢旅行怎么安排？"
           type="text"
         />
         <button
@@ -170,7 +170,7 @@ onMounted(() => {
         >
           <LoaderCircle v-if="isStreaming" class="animate-spin" :size="18" />
           <SendHorizontal v-else :size="18" />
-          Send
+          发送
         </button>
       </form>
     </section>

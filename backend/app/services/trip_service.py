@@ -12,7 +12,7 @@ def plan_trip(db: Session, user: User, payload: TripPlanRequest) -> Trip:
     result = build_itinerary(payload)
     trip = Trip(
         user_id=user.id,
-        title=f"{payload.destination} {payload.days}-day trip",
+        title=f"{payload.destination} {payload.days} 天游",
         origin=payload.origin,
         destination=payload.destination,
         start_date=payload.start_date,
@@ -35,7 +35,7 @@ def list_user_trips(db: Session, user: User) -> list[Trip]:
 def get_user_trip(db: Session, user: User, trip_id: int) -> Trip:
     trip = db.get(Trip, trip_id)
     if trip is None or trip.user_id != user.id:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Trip not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="行程不存在")
     return trip
 
 

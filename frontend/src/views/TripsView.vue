@@ -8,12 +8,12 @@ import { useAppStore } from '../stores/app'
 
 const appStore = useAppStore()
 const form = ref({
-  origin: 'Shanghai',
-  destination: 'Hangzhou',
+  origin: '上海',
+  destination: '杭州',
   start_date: '2026-06-01',
   days: 2,
   budget: '3000',
-  preferences: 'food, relaxed, scenic',
+  preferences: '美食, 慢节奏, 风景',
 })
 const trips = ref<TripResponse[]>([])
 const activeTrip = ref<TripResponse | null>(null)
@@ -29,13 +29,13 @@ async function refreshTrips() {
 
 async function submitPlan() {
   if (!appStore.token) {
-    errorMessage.value = 'Please log in before planning trips.'
+    errorMessage.value = '请先登录，再提交行程规划。'
     return
   }
 
   isPlanning.value = true
   errorMessage.value = ''
-  taskStatus.value = 'Submitting planning task...'
+  taskStatus.value = '正在提交行程规划任务...'
 
   try {
     const task = await planTripAsync(appStore.token, {
@@ -49,17 +49,17 @@ async function submitPlan() {
         .map((item) => item.trim())
         .filter(Boolean),
     })
-    taskStatus.value = `Task #${task.task_id} ${task.status}. Fetching result...`
+    taskStatus.value = `任务 #${task.task_id} 已提交，正在获取规划结果...`
     const taskResult = await getTask(appStore.token, task.task_id)
     const trip = taskResult.output?.trip
     if (!trip) {
-      throw new Error(taskResult.error_message ?? 'Trip planning task did not return a trip.')
+      throw new Error(taskResult.error_message ?? '行程规划任务没有返回可展示的结果。')
     }
     activeTrip.value = trip
     trips.value = [trip, ...trips.value.filter((item) => item.id !== trip.id)]
-    taskStatus.value = `Task #${task.task_id} completed.`
+    taskStatus.value = `任务 #${task.task_id} 已完成。`
   } catch (error) {
-    errorMessage.value = error instanceof Error ? error.message : 'Failed to plan trip.'
+    errorMessage.value = error instanceof Error ? error.message : '行程规划失败，请稍后重试。'
   } finally {
     isPlanning.value = false
   }
@@ -67,7 +67,7 @@ async function submitPlan() {
 
 onMounted(() => {
   refreshTrips().catch((error) => {
-    errorMessage.value = error instanceof Error ? error.message : 'Failed to load trips.'
+    errorMessage.value = error instanceof Error ? error.message : '历史行程加载失败，请刷新页面重试。'
   })
 })
 </script>
@@ -80,34 +80,34 @@ onMounted(() => {
           <MapPinned :size="20" />
         </span>
         <div>
-          <h1 class="text-2xl font-semibold">Trip Planner</h1>
-          <p class="text-sm text-[#5e675b]">Async task itinerary</p>
+          <h1 class="text-2xl font-semibold">行程规划</h1>
+          <p class="text-sm text-[#5e675b]">异步任务生成结构化行程</p>
         </div>
       </div>
 
       <form class="grid gap-4" @submit.prevent="submitPlan">
         <label class="grid gap-2 text-sm font-medium">
-          Origin
+          出发地
           <input v-model="form.origin" class="form-input" type="text" />
         </label>
         <label class="grid gap-2 text-sm font-medium">
-          Destination
+          目的地
           <input v-model="form.destination" class="form-input" type="text" />
         </label>
         <label class="grid gap-2 text-sm font-medium">
-          Start date
+          出发日期
           <input v-model="form.start_date" class="form-input" type="date" />
         </label>
         <label class="grid gap-2 text-sm font-medium">
-          Days
+          游玩天数
           <input v-model="form.days" class="form-input" max="5" min="1" type="number" />
         </label>
         <label class="grid gap-2 text-sm font-medium">
-          Budget
+          预算
           <input v-model="form.budget" class="form-input" type="text" />
         </label>
         <label class="grid gap-2 text-sm font-medium">
-          Preferences
+          偏好
           <input v-model="form.preferences" class="form-input" type="text" />
         </label>
 
@@ -118,7 +118,7 @@ onMounted(() => {
         >
           <LoaderCircle v-if="isPlanning" class="animate-spin" :size="18" />
           <Sparkles v-else :size="18" />
-          Generate itinerary
+          生成行程
         </button>
       </form>
 
@@ -128,15 +128,15 @@ onMounted(() => {
 
     <section class="border border-[#d9d0bd] bg-white">
       <div class="border-b border-[#d9d0bd] p-6">
-        <h2 class="text-xl font-semibold">{{ activeTrip?.title ?? 'No itinerary yet' }}</h2>
+        <h2 class="text-xl font-semibold">{{ activeTrip?.title ?? '暂无行程' }}</h2>
         <p v-if="activeTrip" class="mt-1 flex items-center gap-2 text-sm text-[#5e675b]">
           <CalendarDays :size="16" />
-          {{ activeTrip.start_date }} · {{ activeTrip.days }} days · {{ activeTrip.status }}
+          {{ activeTrip.start_date }} · {{ activeTrip.days }} 天 · {{ activeTrip.status }}
         </p>
       </div>
 
       <div v-if="!activeTrip" class="flex min-h-[520px] items-center justify-center p-8 text-center text-[#5e675b]">
-        Generate your first itinerary to see structured daily plans here.
+        提交你的第一个旅行需求后，这里会展示按天拆分的结构化行程。
       </div>
 
       <div v-else class="grid gap-6 p-6">
@@ -145,7 +145,7 @@ onMounted(() => {
         </p>
 
         <article v-for="day in activeTrip.result.days" :key="day.day" class="border border-[#d9d0bd] p-5">
-          <h3 class="text-lg font-semibold">Day {{ day.day }} · {{ day.theme }}</h3>
+          <h3 class="text-lg font-semibold">第 {{ day.day }} 天 · {{ day.theme }}</h3>
           <div class="mt-4 grid gap-3">
             <div v-for="item in day.schedule" :key="`${day.day}-${item.time}-${item.title}`" class="grid gap-1">
               <p class="text-sm font-semibold text-[#c75532]">{{ item.time }} · {{ item.title }}</p>
@@ -155,14 +155,14 @@ onMounted(() => {
         </article>
 
         <section class="grid gap-2">
-          <h3 class="font-semibold">Route tips</h3>
+          <h3 class="font-semibold">路线建议</h3>
           <p v-for="tip in activeTrip.result.route_tips" :key="tip" class="text-sm leading-6 text-[#5e675b]">
             {{ tip }}
           </p>
         </section>
 
         <section class="grid gap-2">
-          <h3 class="font-semibold">Notes</h3>
+          <h3 class="font-semibold">出行提醒</h3>
           <p v-for="tip in activeTrip.result.tips" :key="tip" class="text-sm leading-6 text-[#5e675b]">
             {{ tip }}
           </p>

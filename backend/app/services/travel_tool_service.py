@@ -18,7 +18,7 @@ def search_places(keyword: str, city: str | None = None, client: AmapClient | No
         items = [
             PlaceItem(
                 name=poi.get("name") or keyword,
-                address=_string_or_joined(poi.get("address")) or city or "Address unavailable",
+                address=_string_or_joined(poi.get("address")) or city or "暂无地址信息",
                 location=poi.get("location"),
             )
             for poi in pois
@@ -33,7 +33,7 @@ def search_places(keyword: str, city: str | None = None, client: AmapClient | No
         items=[
             PlaceItem(
                 name=keyword,
-                address=f"{city or 'Selected city'} travel area",
+                address=f"{city or '目的地城市'}旅行区域",
                 location=None,
             )
         ],
@@ -49,8 +49,8 @@ def get_weather(city: str, client: AmapClient | None = None) -> WeatherResponse:
         casts = forecasts[0].get("casts", []) if forecasts else []
         items = [
             WeatherForecastItem(
-                date=cast.get("date") or "Unknown date",
-                weather=cast.get("dayweather") or cast.get("nightweather") or "Unknown",
+                date=cast.get("date") or "未知日期",
+                weather=cast.get("dayweather") or cast.get("nightweather") or "未知天气",
                 temperature=_temperature_range(cast.get("nighttemp"), cast.get("daytemp")),
                 wind=cast.get("daywind"),
             )
@@ -64,9 +64,9 @@ def get_weather(city: str, client: AmapClient | None = None) -> WeatherResponse:
         city=city,
         forecast=[
             WeatherForecastItem(
-                date="Planning day",
-                weather="Weather data unavailable",
-                temperature="Check before departure",
+                date="规划日",
+                weather="暂未获取到天气数据",
+                temperature="出发前请再次确认",
                 wind=None,
             )
         ],
@@ -83,7 +83,7 @@ def plan_route(origin: str, destination: str, city: str | None, mode: str, clien
         steps_data = paths[0].get("steps", []) if paths else []
         steps = [
             RouteStep(
-                instruction=step.get("instruction") or f"Move toward {destination}",
+                instruction=step.get("instruction") or f"前往{destination}",
                 distance=step.get("distance"),
                 duration=step.get("duration"),
             )
@@ -99,7 +99,7 @@ def plan_route(origin: str, destination: str, city: str | None, mode: str, clien
         mode=mode,
         steps=[
             RouteStep(
-                instruction=f"Use local map navigation from {origin} to {destination} in {city or 'the destination city'}.",
+                instruction=f"建议使用本地地图导航，从{origin}前往{destination}，并结合{city or '目的地城市'}实时交通调整路线。",
                 distance=None,
                 duration=None,
             )
@@ -116,6 +116,6 @@ def _string_or_joined(value: object) -> str:
 
 
 def _temperature_range(low: object, high: object) -> str:
-    low_text = str(low) if low not in (None, "") else "?"
-    high_text = str(high) if high not in (None, "") else "?"
-    return f"{low_text}-{high_text} C"
+    low_text = str(low) if low not in (None, "") else "未知"
+    high_text = str(high) if high not in (None, "") else "未知"
+    return f"{low_text}-{high_text} 摄氏度"

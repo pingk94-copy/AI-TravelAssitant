@@ -23,7 +23,7 @@ def list_sessions(db: Session, user: User) -> list[ChatSession]:
 def get_session_for_user(db: Session, user: User, session_id: int) -> ChatSession:
     session = db.get(ChatSession, session_id)
     if session is None or session.user_id != user.id:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Chat session not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="会话不存在")
     return session
 
 
@@ -47,10 +47,10 @@ def save_message(db: Session, session: ChatSession, role: str, content: str) -> 
 
 def build_assistant_reply(user_message: str) -> str:
     return (
-        "I received your travel request: "
-        f"{user_message}. "
-        "For the current learning phase, I can outline the trip intent and keep the conversation history. "
-        "The next AI phase will replace this local reply with a real streaming model response."
+        "我已经收到你的旅行需求："
+        f"{user_message}。"
+        "当前演示阶段会先保存对话历史，并根据你的描述梳理旅行意图。"
+        "后续接入真实大模型后，这里会替换成由 AI 实时生成的流式回复。"
     )
 
 
