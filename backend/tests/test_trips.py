@@ -45,6 +45,12 @@ def test_plan_trip_creates_structured_itinerary(client: TestClient):
     assert body["destination"] == "Hangzhou"
     assert len(body["result"]["days"]) == 2
     assert body["result"]["summary"]
+    assert body["result"]["agent_trace"] == [
+        "weather_search_agent",
+        "poi_search_agent",
+        "route_search_agent",
+        "planner_agent",
+    ]
     assert body["result"]["days"][0]["schedule"][0]["title"]
 
 

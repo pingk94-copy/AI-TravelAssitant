@@ -525,6 +525,30 @@ npm run build
 
 ---
 
+## Round 6 - 多 Agent 行程编排
+
+### 本轮主要目的
+
+把行程规划从单个 service 拼装升级为 `Planner Agent + 3 个 Search Agent` 的清晰架构，为后续接入 LangChain/LangGraph 做铺垫。
+
+### 新增/修改文件及作用
+
+1. `docs/superpowers/plans/2026-05-14-agent-orchestration.md`：第六阶段实施计划。
+2. `backend/tests/test_trip_agents.py`：Planner Agent 编排测试，确认 3 个 Search Agent 都参与生成结果。
+3. `backend/tests/test_trips.py`：补充断言 `agent_trace`，保证 API 返回可解释的 Agent 执行轨迹。
+4. `backend/app/agents/__init__.py`：Agent 包初始化文件。
+5. `backend/app/agents/search_agents.py`：封装 Weather、POI、Route 三个 Search Agent。
+6. `backend/app/agents/planner_agent.py`：Planner Agent，负责调用三个 Search Agent 并生成最终 itinerary。
+7. `backend/app/schemas/trip.py`：为 itinerary 增加 `agent_trace` 字段。
+8. `backend/app/services/trip_service.py`：改为委托 Planner Agent 生成行程。
+
+### 验证
+
+1. `cd backend && python -m pytest`
+2. `cd frontend && npm run build`
+
+---
+
 
 
 ## Round 4 - 旅行工具封装

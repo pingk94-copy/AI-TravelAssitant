@@ -33,6 +33,7 @@ class ItineraryResult(BaseModel):
     route_tips: list[str]
     days: list[ItineraryDay]
     tips: list[str]
+    agent_trace: list[str] = Field(default_factory=list)
 
 
 class TripResponse(BaseModel):

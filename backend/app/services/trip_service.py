@@ -2,10 +2,10 @@ from fastapi import HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.agents.planner_agent import PlannerAgent
 from app.models.trip import Trip
 from app.models.user import User
-from app.schemas.trip import ItineraryResult, ItineraryScheduleItem, TripPlanRequest, TripResponse
-from app.services.travel_tool_service import get_weather, plan_route, search_places
+from app.schemas.trip import ItineraryResult, TripPlanRequest, TripResponse
 
 
 def plan_trip(db: Session, user: User, payload: TripPlanRequest) -> Trip:
@@ -56,49 +56,4 @@ def to_trip_response(trip: Trip) -> TripResponse:
 
 
 def build_itinerary(payload: TripPlanRequest) -> ItineraryResult:
-    weather = get_weather(payload.destination)
-    places = search_places("scenic food culture", payload.destination)
-    route = plan_route(payload.origin, payload.destination, payload.destination, "walking")
-    preferences_text = ", ".join(payload.preferences) if payload.preferences else "balanced pace"
-    place_names = [item.name for item in places.items] or [payload.destination]
-
-    days = []
-    for day_index in range(1, payload.days + 1):
-        anchor = place_names[(day_index - 1) % len(place_names)]
-        days.append(
-            {
-                "day": day_index,
-                "theme": f"{payload.destination} day {day_index}: {preferences_text}",
-                "schedule": [
-                    ItineraryScheduleItem(
-                        time="09:30",
-                        title=f"Start with {anchor}",
-                        description=f"Use {anchor} as the main anchor for a relaxed route in {payload.destination}.",
-                    ),
-                    ItineraryScheduleItem(
-                        time="14:00",
-                        title="Flexible local exploration",
-                        description="Keep the afternoon open for nearby food, viewpoints, or weather-friendly indoor options.",
-                    ),
-                    ItineraryScheduleItem(
-                        time="19:00",
-                        title="Evening review",
-                        description="Review transport time and adjust the next day based on energy and weather.",
-                    ),
-                ],
-            }
-        )
-
-    return ItineraryResult(
-        summary=f"A {payload.days}-day trip from {payload.origin} to {payload.destination} built around {preferences_text}.",
-        origin=payload.origin,
-        destination=payload.destination,
-        weather=[item.model_dump() for item in weather.forecast],
-        route_tips=[step.instruction for step in route.steps],
-        days=days,
-        tips=[
-            f"Budget reference: {payload.budget or 'not specified'}.",
-            "Check live weather and transport before departure.",
-            "This MVP itinerary uses normalized tool outputs and can be upgraded to a Planner Agent later.",
-        ],
-    )
+    return PlannerAgent().plan(payload)
