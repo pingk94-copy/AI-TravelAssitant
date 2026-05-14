@@ -8,7 +8,9 @@ $ErrorActionPreference = "Stop"
 $Root = Split-Path -Parent $MyInvocation.MyCommand.Path
 $BackendDir = Join-Path $Root "backend"
 $FrontendDir = Join-Path $Root "frontend"
+$LogDir = Join-Path $Root "logs"
 $PythonExe = Join-Path $Root ".venv\Scripts\python.exe"
+$FrontendUrl = "http://127.0.0.1:$FrontendPort"
 
 function Stop-PortProcess {
     param([int]$Port)
@@ -18,13 +20,28 @@ function Stop-PortProcess {
 
     foreach ($processId in $processIds) {
         if ($processId -and $processId -ne 0) {
-            $process = Get-Process -Id $processId -ErrorAction SilentlyContinue
-            if ($process) {
-                Write-Host "Stopping process $($process.ProcessName) (PID $processId) on port $Port..."
-                Stop-Process -Id $processId -Force
-            }
+            Stop-Process -Id $processId -Force -ErrorAction SilentlyContinue
         }
     }
+}
+
+function Wait-HttpReady {
+    param(
+        [string]$Url,
+        [int]$TimeoutSeconds = 40
+    )
+
+    $deadline = (Get-Date).AddSeconds($TimeoutSeconds)
+    while ((Get-Date) -lt $deadline) {
+        try {
+            Invoke-WebRequest -Uri $Url -UseBasicParsing -TimeoutSec 2 | Out-Null
+            return $true
+        }
+        catch {
+            Start-Sleep -Milliseconds 700
+        }
+    }
+    return $false
 }
 
 if (-not (Test-Path $BackendDir)) {
@@ -39,22 +56,35 @@ if (-not (Test-Path $PythonExe)) {
     $PythonExe = "python"
 }
 
-Write-Host "Cleaning old dev-server ports..."
+New-Item -ItemType Directory -Force -Path $LogDir | Out-Null
+
 Stop-PortProcess -Port $BackendPort
 Stop-PortProcess -Port $FrontendPort
-
 Start-Sleep -Seconds 1
 
-Write-Host "Starting backend on http://127.0.0.1:$BackendPort ..."
-$backendPath = $BackendDir.Replace("'", "''")
-$pythonPath = $PythonExe.Replace("'", "''")
-$backendCommand = "Set-Location -LiteralPath '$backendPath'; & '$pythonPath' -m uvicorn app.main:app --host 127.0.0.1 --port $BackendPort"
-Start-Process powershell.exe -ArgumentList @("-NoExit", "-Command", $backendCommand) -WorkingDirectory $BackendDir
+$backendOutLog = Join-Path $LogDir "backend.out.log"
+$backendErrLog = Join-Path $LogDir "backend.err.log"
+$frontendOutLog = Join-Path $LogDir "frontend.out.log"
+$frontendErrLog = Join-Path $LogDir "frontend.err.log"
 
-Write-Host "Starting frontend on http://127.0.0.1:$FrontendPort ..."
-$frontendPath = $FrontendDir.Replace("'", "''")
-$frontendCommand = "Set-Location -LiteralPath '$frontendPath'; npm run dev"
-Start-Process powershell.exe -ArgumentList @("-NoExit", "-Command", $frontendCommand) -WorkingDirectory $FrontendDir
+Start-Process -FilePath $PythonExe `
+    -ArgumentList @("-m", "uvicorn", "app.main:app", "--host", "127.0.0.1", "--port", "$BackendPort") `
+    -WorkingDirectory $BackendDir `
+    -WindowStyle Hidden `
+    -RedirectStandardOutput $backendOutLog `
+    -RedirectStandardError $backendErrLog
 
-Write-Host ""
-Write-Host "Project is starting. Open http://127.0.0.1:$FrontendPort"
+Start-Process -FilePath "npm.cmd" `
+    -ArgumentList @("run", "dev") `
+    -WorkingDirectory $FrontendDir `
+    -WindowStyle Hidden `
+    -RedirectStandardOutput $frontendOutLog `
+    -RedirectStandardError $frontendErrLog
+
+if (Wait-HttpReady -Url $FrontendUrl) {
+    Start-Process $FrontendUrl
+}
+else {
+    Write-Host "前端启动超时，请查看日志：$frontendOutLog 和 $frontendErrLog"
+    Write-Host "后端日志：$backendOutLog 和 $backendErrLog"
+}

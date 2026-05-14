@@ -1,5 +1,5 @@
 @echo off
 setlocal
 cd /d "%~dp0"
-powershell.exe -ExecutionPolicy Bypass -File "%~dp0start-dev.ps1"
+wscript.exe "%~dp0start-dev.vbs"
 endlocal
