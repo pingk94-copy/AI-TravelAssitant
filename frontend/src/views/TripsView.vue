@@ -2,7 +2,8 @@
 import { CalendarDays, LoaderCircle, MapPinned, Sparkles } from 'lucide-vue-next'
 import { onMounted, ref } from 'vue'
 
-import { type TripResponse, listTrips, planTrip } from '../api/trips'
+import { getTask } from '../api/tasks'
+import { type TripResponse, listTrips, planTripAsync } from '../api/trips'
 import { useAppStore } from '../stores/app'
 
 const appStore = useAppStore()
@@ -18,6 +19,7 @@ const trips = ref<TripResponse[]>([])
 const activeTrip = ref<TripResponse | null>(null)
 const isPlanning = ref(false)
 const errorMessage = ref('')
+const taskStatus = ref('')
 
 async function refreshTrips() {
   if (!appStore.token) return
@@ -33,9 +35,10 @@ async function submitPlan() {
 
   isPlanning.value = true
   errorMessage.value = ''
+  taskStatus.value = 'Submitting planning task...'
 
   try {
-    const trip = await planTrip(appStore.token, {
+    const task = await planTripAsync(appStore.token, {
       origin: form.value.origin,
       destination: form.value.destination,
       start_date: form.value.start_date,
@@ -46,8 +49,15 @@ async function submitPlan() {
         .map((item) => item.trim())
         .filter(Boolean),
     })
+    taskStatus.value = `Task #${task.task_id} ${task.status}. Fetching result...`
+    const taskResult = await getTask(appStore.token, task.task_id)
+    const trip = taskResult.output?.trip
+    if (!trip) {
+      throw new Error(taskResult.error_message ?? 'Trip planning task did not return a trip.')
+    }
     activeTrip.value = trip
     trips.value = [trip, ...trips.value.filter((item) => item.id !== trip.id)]
+    taskStatus.value = `Task #${task.task_id} completed.`
   } catch (error) {
     errorMessage.value = error instanceof Error ? error.message : 'Failed to plan trip.'
   } finally {
@@ -71,7 +81,7 @@ onMounted(() => {
         </span>
         <div>
           <h1 class="text-2xl font-semibold">Trip Planner</h1>
-          <p class="text-sm text-[#5e675b]">MVP structured itinerary</p>
+          <p class="text-sm text-[#5e675b]">Async task itinerary</p>
         </div>
       </div>
 
@@ -113,6 +123,7 @@ onMounted(() => {
       </form>
 
       <p v-if="errorMessage" class="mt-4 text-sm text-[#b4442a]">{{ errorMessage }}</p>
+      <p v-if="taskStatus" class="mt-3 text-sm text-[#5e675b]">{{ taskStatus }}</p>
     </section>
 
     <section class="border border-[#d9d0bd] bg-white">
@@ -133,11 +144,7 @@ onMounted(() => {
           {{ activeTrip.result.summary }}
         </p>
 
-        <article
-          v-for="day in activeTrip.result.days"
-          :key="day.day"
-          class="border border-[#d9d0bd] p-5"
-        >
+        <article v-for="day in activeTrip.result.days" :key="day.day" class="border border-[#d9d0bd] p-5">
           <h3 class="text-lg font-semibold">Day {{ day.day }} · {{ day.theme }}</h3>
           <div class="mt-4 grid gap-3">
             <div v-for="item in day.schedule" :key="`${day.day}-${item.time}-${item.title}`" class="grid gap-1">

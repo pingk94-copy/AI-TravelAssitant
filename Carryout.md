@@ -548,6 +548,26 @@ npm run build
 
 ---
 
+## Round 10 - 可交互演示版收口
+
+### 本轮主要目的
+
+让前端行程规划真正走异步任务接口，并补充本地运行说明，形成可打开网页、注册登录、提交规划、展示结果的演示闭环。
+
+### 新增/修改文件及作用
+
+1. `README.md`：新增本地启动、演示流程和验证命令。
+2. `frontend/src/api/tasks.ts`：新增任务查询 API 封装。
+3. `frontend/src/api/trips.ts`：新增 `planTripAsync`，调用异步行程规划接口。
+4. `frontend/src/views/TripsView.vue`：行程页改为提交异步任务、查询任务结果并展示 itinerary。
+
+### 验证
+
+1. `cd backend && python -m pytest`
+2. `cd frontend && npm run build`
+
+---
+
 ## Round 8 - 前端认证接入
 
 ### 本轮主要目的

@@ -47,6 +47,14 @@ export async function planTrip(token: string, payload: TripPlanRequest) {
   })
 }
 
+export async function planTripAsync(token: string, payload: TripPlanRequest) {
+  return apiRequest<{ task_id: number; status: string }>('/api/trips/plan-async', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}` },
+    body: JSON.stringify(payload),
+  })
+}
+
 export async function listTrips(token: string) {
   return apiRequest<TripResponse[]>('/api/trips', {
     headers: { Authorization: `Bearer ${token}` },
