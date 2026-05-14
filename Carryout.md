@@ -525,6 +525,31 @@ npm run build
 
 ---
 
+## Round 8 - 前端认证接入
+
+### 本轮主要目的
+
+打通前端注册/登录流程，让聊天和行程页面可以通过真实登录态访问后端受保护接口。
+
+### 新增/修改文件及作用
+
+1. `docs/superpowers/plans/2026-05-14-frontend-auth.md`：第八阶段实施计划。
+2. `frontend/src/api/auth.ts`：前端认证 API 封装，包含注册、登录和获取当前用户。
+3. `frontend/src/stores/app.ts`：扩展认证状态，保存 token/user，并支持登录恢复和退出。
+4. `frontend/src/views/AuthView.vue`：新增登录/注册页面。
+5. `frontend/src/router/index.ts`：新增 `/auth` 路由，并给聊天、行程页添加登录守卫。
+6. `frontend/src/main.ts`：整理 Vue 应用和 Pinia 初始化。
+7. `frontend/src/App.vue`：顶部导航显示登录入口、当前用户和退出按钮。
+8. `frontend/src/views/ChatView.vue`：未登录提示改为正式登录引导。
+9. `frontend/src/views/TripsView.vue`：未登录提示改为正式登录引导。
+
+### 验证
+
+1. `cd backend && python -m pytest`
+2. `cd frontend && npm run build`
+
+---
+
 ## Round 7 - 异步任务与轮询
 
 ### 本轮主要目的

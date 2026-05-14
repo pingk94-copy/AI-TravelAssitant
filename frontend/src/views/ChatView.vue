@@ -37,7 +37,7 @@ async function selectSession(session: ChatSession) {
 
 async function startSession() {
   if (!appStore.token) {
-    errorMessage.value = 'Set a token in the store after logging in before using chat.'
+    errorMessage.value = 'Please log in before starting a chat session.'
     return
   }
 

@@ -27,7 +27,7 @@ async function refreshTrips() {
 
 async function submitPlan() {
   if (!appStore.token) {
-    errorMessage.value = 'Set a token in the store after logging in before planning trips.'
+    errorMessage.value = 'Please log in before planning trips.'
     return
   }
 

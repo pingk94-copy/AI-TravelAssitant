@@ -1,6 +1,10 @@
 <script setup lang="ts">
-import { Compass, MapPinned, MessageSquareText, Route, UserRound } from 'lucide-vue-next'
+import { Compass, LogOut, MapPinned, MessageSquareText, Route, UserRound } from 'lucide-vue-next'
 import { RouterLink, RouterView } from 'vue-router'
+
+import { useAppStore } from './stores/app'
+
+const appStore = useAppStore()
 </script>
 
 <template>
@@ -32,9 +36,26 @@ import { RouterLink, RouterView } from 'vue-router'
           </RouterLink>
         </nav>
 
-        <button class="inline-flex h-10 w-10 items-center justify-center rounded border border-[#cfc4ae] bg-white text-[#1d3b2a]">
-          <UserRound :size="18" />
-        </button>
+        <div class="flex items-center gap-2">
+          <RouterLink
+            v-if="!appStore.isAuthenticated"
+            class="inline-flex h-10 items-center justify-center gap-2 rounded border border-[#cfc4ae] bg-white px-3 text-sm font-semibold text-[#1d3b2a]"
+            to="/auth"
+          >
+            <UserRound :size="17" />
+            Login
+          </RouterLink>
+          <template v-else>
+            <span class="hidden text-sm text-[#465144] sm:inline">{{ appStore.user?.username }}</span>
+            <button
+              class="inline-flex h-10 w-10 items-center justify-center rounded border border-[#cfc4ae] bg-white text-[#1d3b2a]"
+              type="button"
+              @click="appStore.logout()"
+            >
+              <LogOut :size="18" />
+            </button>
+          </template>
+        </div>
       </div>
     </header>
 
