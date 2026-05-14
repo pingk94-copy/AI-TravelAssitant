@@ -525,6 +525,31 @@ npm run build
 
 ---
 
+## Round 7 - 异步任务与轮询
+
+### 本轮主要目的
+
+新增任务式行程规划协议：提交规划请求先返回 `task_id`，再通过任务接口查询状态和结果，为后续真正后台队列打基础。
+
+### 新增/修改文件及作用
+
+1. `docs/superpowers/plans/2026-05-14-async-trip-tasks.md`：第七阶段实施计划。
+2. `backend/tests/test_tasks.py`：任务接口测试，覆盖异步提交、轮询结果、用户隔离和未登录拦截。
+3. `backend/app/models/task.py`：新增 `Task` ORM 模型，用于保存任务状态、输入和输出。
+4. `backend/app/schemas/task.py`：任务提交和任务详情响应模型。
+5. `backend/app/services/task_service.py`：任务创建、完成、失败和查询逻辑。
+6. `backend/app/api/routes/tasks.py`：任务轮询路由，提供 `GET /api/tasks/{task_id}`。
+7. `backend/app/api/routes/trips.py`：新增 `POST /api/trips/plan-async`。
+8. `backend/app/db/base.py`：注册 `Task` 模型。
+9. `backend/app/main.py`：注册任务路由到 FastAPI 应用。
+
+### 验证
+
+1. `cd backend && python -m pytest`
+2. `cd frontend && npm run build`
+
+---
+
 ## Round 6 - 多 Agent 行程编排
 
 ### 本轮主要目的

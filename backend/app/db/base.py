@@ -6,5 +6,6 @@ class Base(DeclarativeBase):
 
 
 from app.models.chat import ChatMessage, ChatSession  # noqa: E402,F401
+from app.models.task import Task  # noqa: E402,F401
 from app.models.trip import Trip  # noqa: E402,F401
 from app.models.user import User  # noqa: E402,F401
