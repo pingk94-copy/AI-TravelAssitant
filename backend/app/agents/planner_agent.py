@@ -59,7 +59,7 @@ class PlannerAgent:
             tips=[
                 f"预算参考：{payload.budget or '暂未填写'}。",
                 "出发前请再次确认实时天气和交通情况。",
-                "本行程由 Planner Agent 协调天气、景点和路线搜索 Agent 共同生成。",
+                "本行程由 Planner Agent 协调天气、景点和路线搜索 Agent 共同生成；配置大模型后会优先使用 LLM 生成。",
             ],
             agent_trace=[
                 self.weather_agent.name,

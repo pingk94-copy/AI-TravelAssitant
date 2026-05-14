@@ -6,6 +6,7 @@ from app.agents.planner_agent import PlannerAgent
 from app.models.trip import Trip
 from app.models.user import User
 from app.schemas.trip import ItineraryResult, TripPlanRequest, TripResponse
+from app.services.llm_service import generate_trip_with_llm
 
 
 def plan_trip(db: Session, user: User, payload: TripPlanRequest) -> Trip:
@@ -56,4 +57,7 @@ def to_trip_response(trip: Trip) -> TripResponse:
 
 
 def build_itinerary(payload: TripPlanRequest) -> ItineraryResult:
+    llm_result = generate_trip_with_llm(payload)
+    if llm_result is not None:
+        return llm_result
     return PlannerAgent().plan(payload)

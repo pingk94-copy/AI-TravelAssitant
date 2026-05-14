@@ -1,11 +1,10 @@
-from collections.abc import Iterable
-
-from fastapi import HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
+from fastapi import HTTPException, status
 
 from app.models.chat import ChatMessage, ChatSession
 from app.models.user import User
+from app.services.llm_service import build_assistant_reply, stream_sse_tokens
 
 
 def create_session(db: Session, user: User, title: str) -> ChatSession:
@@ -43,18 +42,3 @@ def save_message(db: Session, session: ChatSession, role: str, content: str) -> 
     db.commit()
     db.refresh(message)
     return message
-
-
-def build_assistant_reply(user_message: str) -> str:
-    return (
-        "我已经收到你的旅行需求："
-        f"{user_message}。"
-        "当前演示阶段会先保存对话历史，并根据你的描述梳理旅行意图。"
-        "后续接入真实大模型后，这里会替换成由 AI 实时生成的流式回复。"
-    )
-
-
-def stream_sse_tokens(text: str) -> Iterable[str]:
-    for token in text.split(" "):
-        yield f"event: token\ndata: {token} \n\n"
-    yield "event: done\ndata: [DONE]\n\n"

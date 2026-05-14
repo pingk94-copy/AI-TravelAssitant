@@ -5,7 +5,10 @@ class Settings(BaseSettings):
     app_name: str = "ai-travel-assistant-api"
     app_version: str = "0.1.0"
     api_prefix: str = "/api"
-    cors_origins: list[str] = ["http://localhost:5173"]
+    cors_origins: list[str] = [
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+    ]
     database_url: str = "sqlite:///./travel_assistant.db"
     jwt_secret_key: str = "change-this-development-secret"
     jwt_algorithm: str = "HS256"
@@ -13,6 +16,10 @@ class Settings(BaseSettings):
     amap_api_key: str = ""
     amap_base_url: str = "https://restapi.amap.com/v3"
     external_api_timeout_seconds: float = 5.0
+    openai_api_key: str = ""
+    openai_base_url: str = "https://api.openai.com/v1"
+    openai_model: str = "gpt-4o-mini"
+    openai_timeout_seconds: float = 30.0
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 
