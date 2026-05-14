@@ -524,6 +524,32 @@ npm run build
 
 ---
 
+## Round 5 - 行程规划 MVP
+
+### 本轮主要目的
+
+打通第一版“提交旅行参数 -> 生成结构化行程 -> 保存行程 -> 前端展示结果”的完整闭环。
+
+### 新增/修改文件及作用
+
+1. `docs/superpowers/plans/2026-05-14-trip-planning-mvp.md`：第五阶段实施计划。
+2. `backend/tests/test_trips.py`：行程规划接口测试，覆盖生成、列表、详情和未登录拦截。
+3. `backend/app/models/trip.py`：新增 `Trip` ORM 模型，用于保存行程规划结果。
+4. `backend/app/schemas/trip.py`：行程规划请求、响应和 itinerary 结构模型。
+5. `backend/app/services/trip_service.py`：行程规划业务层，组合天气、地点、路线工具生成 MVP 行程。
+6. `backend/app/api/routes/trips.py`：行程接口路由，提供 `/api/trips/plan`、`/api/trips`、`/api/trips/{trip_id}`。
+7. `backend/app/db/base.py`：注册 `Trip` 模型，保证自动建表包含 `trips`。
+8. `backend/app/main.py`：注册行程路由到 FastAPI 应用。
+9. `frontend/src/api/trips.ts`：前端行程 API 封装。
+10. `frontend/src/views/TripsView.vue`：行程页从占位页改为可提交表单并展示结构化 itinerary。
+
+### 验证
+
+1. `cd backend && python -m pytest`
+2. `cd frontend && npm run build`
+
+---
+
 ## Round 4 - 旅行工具封装
 
 ### 新增/修改文件及作用
