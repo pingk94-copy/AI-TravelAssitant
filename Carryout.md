@@ -525,6 +525,29 @@ npm run build
 
 ---
 
+## Round 9 - 本地运行联调
+
+### 本轮主要目的
+
+修复本地启动时暴露的运行时问题，并确认项目已经能打开网页、注册登录、提交行程规划、查询任务结果。
+
+### 新增/修改文件及作用
+
+1. `backend/app/db/base.py`：移除模型反向导入，避免 uvicorn 启动时循环导入。
+2. `backend/app/db/init_models.py`：集中导入 ORM 模型，保证 `create_all` 建表时能注册所有模型。
+3. `backend/app/main.py`：加载 `init_models`，修复后端启动建表链路。
+4. `frontend/package.json`：固定 `npm run dev` 的 host 和 port，方便直接访问 `http://127.0.0.1:5173`。
+
+### 验证
+
+1. `cd backend && python -m pytest`
+2. `cd frontend && npm run build`
+3. `http://127.0.0.1:8000/api/health`
+4. `http://127.0.0.1:5173`
+5. 注册用户后调用 `POST /api/trips/plan-async`，再用 `GET /api/tasks/{task_id}` 查询结果。
+
+---
+
 ## Round 8 - 前端认证接入
 
 ### 本轮主要目的

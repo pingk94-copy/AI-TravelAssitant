@@ -9,6 +9,7 @@ from app.api.routes.tools import router as tools_router
 from app.api.routes.trips import router as trips_router
 from app.core.config import settings
 from app.db.base import Base
+from app.db import init_models  # noqa: F401
 from app.db.session import engine
 
 
