@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { CalendarDays, CloudSun, Hotel, MapPinned, SendHorizontal } from 'lucide-vue-next'
+import { CalendarDays, CloudSun, Hotel, MapPinned, MessageSquareText, Route } from 'lucide-vue-next'
+import { RouterLink } from 'vue-router'
 
 const capabilityCards = [
   { title: '天气辅助规划', text: '先查询目的地天气，再安排户外景点、室内备选和每日节奏。', icon: CloudSun },
@@ -21,17 +22,16 @@ const capabilityCards = [
         </h1>
       </div>
 
-      <form class="mt-10 grid gap-3 rounded bg-[#f8f5ed] p-3 text-[#17201a] md:grid-cols-[1fr_auto]">
-        <input
-          class="min-h-12 rounded border border-[#d9d0bd] bg-white px-4 outline-none focus:border-[#1d3b2a]"
-          placeholder="帮我规划上海出发去杭州的 3 天游玩路线，节奏轻松一点"
-          type="text"
-        />
-        <button class="inline-flex min-h-12 items-center justify-center gap-2 rounded bg-[#c75532] px-5 font-semibold text-white">
-          <SendHorizontal :size="18" />
-          开始规划
-        </button>
-      </form>
+      <div class="mt-10 grid gap-3 rounded bg-[#f8f5ed] p-3 text-[#17201a] sm:grid-cols-2">
+        <RouterLink class="home-action bg-[#c75532] text-white" to="/trips">
+          <Route :size="18" />
+          开始规划行程
+        </RouterLink>
+        <RouterLink class="home-action border border-[#d9d0bd] bg-white text-[#1d3b2a]" to="/chat">
+          <MessageSquareText :size="18" />
+          进入 AI 对话
+        </RouterLink>
+      </div>
     </section>
 
     <section class="grid content-start gap-4">
@@ -47,3 +47,17 @@ const capabilityCards = [
     </section>
   </main>
 </template>
+
+<style scoped>
+.home-action {
+  display: inline-flex;
+  min-height: 3rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 6px;
+  padding: 0 1rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+</style>

@@ -8,15 +8,29 @@ import { useAppStore } from '../stores/app'
 const router = useRouter()
 const appStore = useAppStore()
 const mode = ref<'login' | 'register'>('login')
-const username = ref('traveler')
-const email = ref('traveler@example.com')
-const password = ref('StrongPass123')
+const username = ref('')
+const email = ref('')
+const password = ref('')
 const errorMessage = ref('')
 const isSubmitting = ref(false)
 
 const title = computed(() => (mode.value === 'login' ? '登录账号' : '创建账号'))
+const canSubmit = computed(() => {
+  const hasAccount = email.value.trim() && password.value
+  return mode.value === 'login' ? Boolean(hasAccount && !isSubmitting.value) : Boolean(hasAccount && username.value.trim() && !isSubmitting.value)
+})
+
+function switchMode(nextMode: 'login' | 'register') {
+  mode.value = nextMode
+  errorMessage.value = ''
+}
 
 async function submitAuth() {
+  if (!canSubmit.value) {
+    errorMessage.value = mode.value === 'login' ? '请输入邮箱和密码。' : '请输入用户名、邮箱和密码。'
+    return
+  }
+
   isSubmitting.value = true
   errorMessage.value = ''
 
@@ -60,7 +74,7 @@ async function submitAuth() {
           class="flex-1 rounded px-4 py-2 text-sm font-semibold"
           :class="mode === 'login' ? 'bg-white text-[#17201a]' : 'text-[#5e675b]'"
           type="button"
-          @click="mode = 'login'"
+          @click="switchMode('login')"
         >
           登录
         </button>
@@ -68,7 +82,7 @@ async function submitAuth() {
           class="flex-1 rounded px-4 py-2 text-sm font-semibold"
           :class="mode === 'register' ? 'bg-white text-[#17201a]' : 'text-[#5e675b]'"
           type="button"
-          @click="mode = 'register'"
+          @click="switchMode('register')"
         >
           注册
         </button>
@@ -79,20 +93,26 @@ async function submitAuth() {
       <form class="mt-6 grid gap-4" @submit.prevent="submitAuth">
         <label v-if="mode === 'register'" class="grid gap-2 text-sm font-medium">
           用户名
-          <input v-model="username" class="auth-input" type="text" />
+          <input v-model="username" autocomplete="username" class="auth-input" placeholder="请输入用户名" type="text" />
         </label>
         <label class="grid gap-2 text-sm font-medium">
           邮箱
-          <input v-model="email" class="auth-input" type="email" />
+          <input v-model="email" autocomplete="email" class="auth-input" placeholder="请输入邮箱" type="email" />
         </label>
         <label class="grid gap-2 text-sm font-medium">
           密码
-          <input v-model="password" class="auth-input" type="password" />
+          <input
+            v-model="password"
+            :autocomplete="mode === 'login' ? 'current-password' : 'new-password'"
+            class="auth-input"
+            placeholder="请输入密码"
+            type="password"
+          />
         </label>
 
         <button
           class="mt-2 inline-flex h-12 items-center justify-center gap-2 rounded bg-[#1d3b2a] px-5 font-semibold text-white disabled:opacity-60"
-          :disabled="isSubmitting"
+          :disabled="!canSubmit"
           type="submit"
         >
           <UserPlus v-if="mode === 'register'" :size="18" />

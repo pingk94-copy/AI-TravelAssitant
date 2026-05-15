@@ -60,3 +60,10 @@ export async function listTrips(token: string) {
     headers: { Authorization: `Bearer ${token}` },
   })
 }
+
+export async function deleteTrip(token: string, tripId: number) {
+  return apiRequest<void>(`/api/trips/${tripId}`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${token}` },
+  })
+}

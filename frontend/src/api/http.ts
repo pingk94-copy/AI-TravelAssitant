@@ -14,7 +14,16 @@ export async function apiRequest<T>(path: string, options: RequestInit = {}): Pr
   })
 
   if (!response.ok) {
-    throw new Error(`API request failed with status ${response.status}`)
+    let message = `请求失败，状态码 ${response.status}`
+    try {
+      const body = await response.json()
+      if (typeof body.detail === 'string') {
+        message = body.detail
+      }
+    } catch {
+      // Keep the status-based message when the backend returns no JSON body.
+    }
+    throw new Error(message)
   }
 
   if (response.status === 204) {

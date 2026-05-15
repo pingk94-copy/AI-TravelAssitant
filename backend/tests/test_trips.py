@@ -93,6 +93,44 @@ def test_get_trip_detail_returns_saved_itinerary(client: TestClient):
     assert response.json()["result"]["destination"] == "Hangzhou"
 
 
+def test_delete_trip_removes_only_current_user_trip(client: TestClient):
+    token = register_and_get_token(client)
+    trip_id = client.post(
+        "/api/trips/plan",
+        json=trip_payload(),
+        headers=auth_headers(token),
+    ).json()["id"]
+
+    response = client.delete(f"/api/trips/{trip_id}", headers=auth_headers(token))
+
+    assert response.status_code == 204
+    assert client.get("/api/trips", headers=auth_headers(token)).json() == []
+    assert client.get(f"/api/trips/{trip_id}", headers=auth_headers(token)).status_code == 404
+
+
+def test_delete_trip_cannot_delete_other_users_trip(client: TestClient):
+    first_token = register_and_get_token(client)
+    trip_id = client.post(
+        "/api/trips/plan",
+        json=trip_payload(),
+        headers=auth_headers(first_token),
+    ).json()["id"]
+    second_register = client.post(
+        "/api/auth/register",
+        json={
+            "username": "delete-trip-user",
+            "email": "delete-trip-user@example.com",
+            "password": "StrongPass123",
+        },
+    )
+    second_token = second_register.json()["access_token"]
+
+    response = client.delete(f"/api/trips/{trip_id}", headers=auth_headers(second_token))
+
+    assert response.status_code == 404
+    assert client.get(f"/api/trips/{trip_id}", headers=auth_headers(first_token)).status_code == 200
+
+
 def test_trip_endpoints_require_authentication(client: TestClient):
     response = client.post("/api/trips/plan", json=trip_payload())
 

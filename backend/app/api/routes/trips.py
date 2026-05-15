@@ -6,7 +6,7 @@ from app.db.session import get_db
 from app.models.user import User
 from app.schemas.task import TaskSubmitResponse
 from app.schemas.trip import TripPlanRequest, TripResponse
-from app.services.trip_service import get_user_trip, list_user_trips, plan_trip, to_trip_response
+from app.services.trip_service import delete_trip, get_user_trip, list_user_trips, plan_trip, to_trip_response
 from app.services.task_service import complete_task, create_task, fail_task
 
 router = APIRouter(prefix="/trips", tags=["trips"])
@@ -53,3 +53,13 @@ def read_trip(
     db: Session = Depends(get_db),
 ) -> TripResponse:
     return to_trip_response(get_user_trip(db, current_user, trip_id))
+
+
+@router.delete("/{trip_id}", status_code=204)
+def delete_trip_plan(
+    trip_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> None:
+    trip = get_user_trip(db, current_user, trip_id)
+    delete_trip(db, trip)

@@ -41,6 +41,11 @@ def get_user_trip(db: Session, user: User, trip_id: int) -> Trip:
     return trip
 
 
+def delete_trip(db: Session, trip: Trip) -> None:
+    db.delete(trip)
+    db.commit()
+
+
 def to_trip_response(trip: Trip) -> TripResponse:
     return TripResponse(
         id=trip.id,
