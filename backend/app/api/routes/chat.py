@@ -9,6 +9,7 @@ from app.schemas.chat import ChatMessageResponse, ChatSessionCreate, ChatSession
 from app.services.chat_service import (
     build_assistant_reply,
     create_session,
+    delete_session,
     get_session_for_user,
     list_messages,
     list_sessions,
@@ -45,6 +46,16 @@ def read_chat_messages(
 ) -> list[ChatMessageResponse]:
     session = get_session_for_user(db, current_user, session_id)
     return [ChatMessageResponse.model_validate(message) for message in list_messages(db, session)]
+
+
+@router.delete("/sessions/{session_id}", status_code=204)
+def delete_chat_session(
+    session_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> None:
+    session = get_session_for_user(db, current_user, session_id)
+    delete_session(db, session)
 
 
 @router.post("/sessions/{session_id}/stream")

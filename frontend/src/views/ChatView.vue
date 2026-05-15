@@ -1,25 +1,42 @@
 <script setup lang="ts">
-import { LoaderCircle, MessageSquarePlus, SendHorizontal } from 'lucide-vue-next'
-import { onMounted, ref } from 'vue'
+import { LoaderCircle, MessageSquarePlus, SendHorizontal, Trash2 } from 'lucide-vue-next'
+import { computed, nextTick, onMounted, ref } from 'vue'
 
 import {
   type ChatMessage,
   type ChatSession,
   createChatSession,
+  deleteChatSession,
   listChatMessages,
   listChatSessions,
   streamChatReply,
 } from '../api/chat'
 import { useAppStore } from '../stores/app'
 
+type RenderBlock = {
+  type: 'heading' | 'list' | 'paragraph'
+  text?: string
+  items?: string[]
+}
+
 const appStore = useAppStore()
 const sessions = ref<ChatSession[]>([])
 const activeSession = ref<ChatSession | null>(null)
 const messages = ref<ChatMessage[]>([])
-const draft = ref('帮我规划一次杭州慢旅行')
-const sessionTitle = ref('新的旅行对话')
+const draft = ref('')
+const sessionTitle = ref('')
 const isStreaming = ref(false)
 const errorMessage = ref('')
+const messageList = ref<HTMLElement | null>(null)
+
+const canSend = computed(() => Boolean(activeSession.value && draft.value.trim() && !isStreaming.value))
+
+async function scrollToBottom() {
+  await nextTick()
+  if (messageList.value) {
+    messageList.value.scrollTop = messageList.value.scrollHeight
+  }
+}
 
 async function refreshSessions() {
   if (!appStore.token) return
@@ -33,6 +50,7 @@ async function selectSession(session: ChatSession) {
   if (!appStore.token) return
   activeSession.value = session
   messages.value = await listChatMessages(appStore.token, session.id)
+  await scrollToBottom()
 }
 
 async function startSession() {
@@ -41,10 +59,29 @@ async function startSession() {
     return
   }
 
-  const session = await createChatSession(appStore.token, sessionTitle.value)
+  const title = sessionTitle.value.trim() || '新的旅行对话'
+  const session = await createChatSession(appStore.token, title)
   sessions.value = [session, ...sessions.value]
   activeSession.value = session
   messages.value = []
+  sessionTitle.value = ''
+  errorMessage.value = ''
+}
+
+async function removeSession(session: ChatSession) {
+  if (!appStore.token || isStreaming.value) return
+  const confirmed = window.confirm(`确定删除「${session.title}」吗？`)
+  if (!confirmed) return
+
+  await deleteChatSession(appStore.token, session.id)
+  sessions.value = sessions.value.filter((item) => item.id !== session.id)
+  if (activeSession.value?.id === session.id) {
+    activeSession.value = sessions.value[0] ?? null
+    messages.value = []
+    if (activeSession.value) {
+      await selectSession(activeSession.value)
+    }
+  }
 }
 
 async function sendMessage() {
@@ -67,17 +104,59 @@ async function sendMessage() {
     created_at: new Date().toISOString(),
   }
   messages.value.push(assistantMessage)
+  await scrollToBottom()
 
   try {
-    await streamChatReply(appStore.token, activeSession.value.id, userText, (token) => {
+    await streamChatReply(appStore.token, activeSession.value.id, userText, async (token) => {
       assistantMessage.content += token
+      await scrollToBottom()
     })
     messages.value = await listChatMessages(appStore.token, activeSession.value.id)
+    await scrollToBottom()
   } catch (error) {
     errorMessage.value = error instanceof Error ? error.message : 'AI 回复生成失败，请稍后重试。'
   } finally {
     isStreaming.value = false
   }
+}
+
+function renderBlocks(content: string): RenderBlock[] {
+  const normalized = content
+    .replace(/\r/g, '')
+    .replace(/\*\*(.*?)\*\*/g, '$1')
+    .replace(/#{1,6}\s*/g, '\n## ')
+    .replace(/\s+-\s+/g, '\n- ')
+    .replace(/\s+(\d+[.、])\s+/g, '\n$1 ')
+    .replace(/([。！？；])\s*/g, '$1\n')
+  const lines = normalized
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean)
+  const blocks: RenderBlock[] = []
+  let listItems: string[] = []
+
+  function flushList() {
+    if (listItems.length > 0) {
+      blocks.push({ type: 'list', items: listItems })
+      listItems = []
+    }
+  }
+
+  for (const line of lines) {
+    if (line.startsWith('## ')) {
+      flushList()
+      blocks.push({ type: 'heading', text: line.replace(/^##\s*/, '') })
+    } else if (/^[-*]\s+/.test(line)) {
+      listItems.push(line.replace(/^[-*]\s+/, ''))
+    } else if (/^\d+[.、]\s+/.test(line)) {
+      listItems.push(line.replace(/^\d+[.、]\s+/, ''))
+    } else {
+      flushList()
+      blocks.push({ type: 'paragraph', text: line })
+    }
+  }
+  flushList()
+  return blocks.length > 0 ? blocks : [{ type: 'paragraph', text: content }]
 }
 
 onMounted(() => {
@@ -88,7 +167,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <main class="mx-auto grid max-w-7xl gap-5 px-5 py-8 lg:grid-cols-[300px_1fr]">
+  <main class="mx-auto grid max-w-7xl gap-5 px-5 py-8 lg:grid-cols-[320px_1fr]">
     <aside class="border border-[#d9d0bd] bg-[#f8f5ed] p-5">
       <h1 class="text-lg font-semibold">旅行会话</h1>
 
@@ -96,6 +175,7 @@ onMounted(() => {
         <input
           v-model="sessionTitle"
           class="h-11 rounded border border-[#d9d0bd] bg-white px-3 text-sm outline-none focus:border-[#1d3b2a]"
+          placeholder="会话标题，例如：西安三日游"
           type="text"
         />
         <button
@@ -109,30 +189,38 @@ onMounted(() => {
       </div>
 
       <div class="mt-6 grid gap-2">
-        <button
+        <div
           v-for="session in sessions"
           :key="session.id"
-          class="rounded border px-3 py-3 text-left text-sm"
+          class="group grid grid-cols-[1fr_auto] items-center gap-2 rounded border px-3 py-3 text-sm"
           :class="
             activeSession?.id === session.id
               ? 'border-[#1d3b2a] bg-[#e7dfcf] text-[#17201a]'
               : 'border-[#d9d0bd] bg-white text-[#5e675b]'
           "
-          type="button"
-          @click="selectSession(session)"
         >
-          {{ session.title }}
-        </button>
+          <button class="truncate text-left" type="button" @click="selectSession(session)">
+            {{ session.title }}
+          </button>
+          <button
+            class="inline-flex h-8 w-8 items-center justify-center rounded text-[#8b4a36] hover:bg-white"
+            title="删除会话"
+            type="button"
+            @click="removeSession(session)"
+          >
+            <Trash2 :size="15" />
+          </button>
+        </div>
       </div>
     </aside>
 
-    <section class="flex min-h-[620px] flex-col border border-[#d9d0bd] bg-white">
+    <section class="flex min-h-[680px] flex-col border border-[#d9d0bd] bg-white">
       <div class="border-b border-[#d9d0bd] p-5">
         <h2 class="text-xl font-semibold">{{ activeSession?.title ?? 'AI 旅行对话' }}</h2>
-        <p class="mt-1 text-sm text-[#5e675b]">通过 SSE 流式接收 FastAPI 后端返回的 AI 回复。</p>
+        <p class="mt-1 text-sm text-[#5e675b]">回复会按标题、段落和清单拆开显示，方便阅读和复查。</p>
       </div>
 
-      <div class="flex-1 space-y-4 overflow-y-auto p-5">
+      <div ref="messageList" class="flex-1 space-y-5 overflow-y-auto p-5">
         <div v-if="!activeSession" class="flex h-full items-center justify-center text-center text-[#5e675b]">
           先新建一个会话，就可以开始和 AI 讨论旅行计划。
         </div>
@@ -140,14 +228,33 @@ onMounted(() => {
         <article
           v-for="message in messages"
           :key="message.id"
-          class="max-w-[82%] rounded px-4 py-3 text-sm leading-6"
+          class="rounded px-4 py-3 text-sm leading-7"
           :class="
             message.role === 'user'
-              ? 'ml-auto bg-[#1d3b2a] text-white'
-              : 'mr-auto border border-[#d9d0bd] bg-[#f8f5ed] text-[#17201a]'
+              ? 'ml-auto max-w-[78%] bg-[#1d3b2a] text-white'
+              : 'mr-auto max-w-[860px] border border-[#d9d0bd] bg-[#f8f5ed] text-[#17201a]'
           "
         >
-          {{ message.content }}
+          <template v-if="message.role === 'assistant'">
+            <div class="grid gap-3">
+              <template v-for="(block, index) in renderBlocks(message.content)" :key="`${message.id}-${index}`">
+                <h3 v-if="block.type === 'heading'" class="text-base font-semibold text-[#1d3b2a]">
+                  {{ block.text }}
+                </h3>
+                <ul v-else-if="block.type === 'list'" class="grid gap-2 pl-4">
+                  <li v-for="item in block.items" :key="item" class="list-disc">
+                    {{ item }}
+                  </li>
+                </ul>
+                <p v-else>
+                  {{ block.text }}
+                </p>
+              </template>
+            </div>
+          </template>
+          <template v-else>
+            {{ message.content }}
+          </template>
         </article>
       </div>
 
@@ -165,7 +272,7 @@ onMounted(() => {
         />
         <button
           class="inline-flex h-12 items-center justify-center gap-2 rounded bg-[#c75532] px-5 font-semibold text-white disabled:opacity-60"
-          :disabled="!activeSession || isStreaming"
+          :disabled="!canSend"
           type="submit"
         >
           <LoaderCircle v-if="isStreaming" class="animate-spin" :size="18" />

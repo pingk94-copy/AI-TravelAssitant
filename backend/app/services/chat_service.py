@@ -1,6 +1,6 @@
+from fastapi import HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
-from fastapi import HTTPException, status
 
 from app.models.chat import ChatMessage, ChatSession
 from app.models.user import User
@@ -42,3 +42,8 @@ def save_message(db: Session, session: ChatSession, role: str, content: str) -> 
     db.commit()
     db.refresh(message)
     return message
+
+
+def delete_session(db: Session, session: ChatSession) -> None:
+    db.delete(session)
+    db.commit()

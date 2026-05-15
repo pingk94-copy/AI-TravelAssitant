@@ -31,17 +31,7 @@ class FailingTransport:
 
 
 def test_llm_client_returns_chat_completion_content():
-    transport = FakeTransport(
-        {
-            "choices": [
-                {
-                    "message": {
-                        "content": "真实模型回复",
-                    }
-                }
-            ]
-        }
-    )
+    transport = FakeTransport({"choices": [{"message": {"content": "真实模型回复"}}]})
     client = LLMClient(
         LLMSettings(
             api_key="test-key",
@@ -76,6 +66,18 @@ def test_chat_fallback_explains_provider_failure_when_key_is_configured():
 
     assert "大模型调用失败" in content
     assert "bad-model" in content
+
+
+def test_chat_prompt_requires_readable_sections_instead_of_wall_of_text():
+    transport = FakeTransport({"choices": [{"message": {"content": "分段回复"}}]})
+    client = LLMClient(LLMSettings(api_key="test-key", model="test-model"), transport=transport)
+
+    build_assistant_reply("我想从长沙到西安旅行三天", client)
+
+    system_prompt = transport.requests[0][1]["json"]["messages"][0]["content"]
+    assert "不要输出一整段长文本" in system_prompt
+    assert "使用清晰小标题" in system_prompt
+    assert "每段不超过" in system_prompt
 
 
 def test_generate_trip_with_llm_parses_structured_itinerary():
@@ -127,5 +129,61 @@ def test_generate_trip_with_llm_parses_structured_itinerary():
     result = generate_trip_with_llm(payload, client)
 
     assert result.summary == "杭州一日美食慢旅行"
-    assert result.agent_trace == ["llm_planner"]
+    assert result.agent_trace == ["tool_context", "llm_planner"]
     assert result.days[0].schedule[0].title == "西湖散步"
+
+
+def test_generate_trip_prompt_includes_tool_context_and_quality_rules():
+    payload = TripPlanRequest(
+        origin="上海",
+        destination="西安",
+        start_date=date(2026, 6, 1),
+        days=3,
+        budget="3000",
+        preferences=["历史", "美食"],
+    )
+    transport = FakeTransport(
+        {
+            "choices": [
+                {
+                    "message": {
+                        "content": """
+                        {
+                          "summary": "西安三日历史美食行程",
+                          "origin": "上海",
+                          "destination": "西安",
+                          "weather": [],
+                          "route_tips": ["优先地铁，跨区景点提前出发。"],
+                          "days": [
+                            {"day": 1, "theme": "城墙与钟鼓楼", "schedule": [{"time": "09:30", "title": "抵达西安", "description": "入住钟楼附近，方便步行。"}]},
+                            {"day": 2, "theme": "兵马俑与华清宫", "schedule": [{"time": "08:30", "title": "前往临潼", "description": "乘地铁转公交，预留排队时间。"}]},
+                            {"day": 3, "theme": "陕历博与大雁塔", "schedule": [{"time": "09:00", "title": "陕西历史博物馆", "description": "提前预约，重点看唐代展品。"}]}
+                          ],
+                          "tips": ["热门博物馆提前预约。"]
+                        }
+                        """,
+                    }
+                }
+            ]
+        }
+    )
+    client = LLMClient(LLMSettings(api_key="test-key", model="test-model"), transport=transport)
+
+    generate_trip_with_llm(
+        payload,
+        client,
+        tool_context={
+            "places": ["秦始皇帝陵博物院", "陕西历史博物馆"],
+            "weather": ["2026-06-01 晴 20-30 摄氏度"],
+            "routes": ["上海到西安优先高铁或飞机，市内优先地铁。"],
+        },
+    )
+
+    request_body = transport.requests[0][1]["json"]
+    system_prompt = request_body["messages"][0]["content"]
+    user_prompt = request_body["messages"][1]["content"]
+    assert "秦始皇帝陵博物院" in user_prompt
+    assert "陕西历史博物馆" in user_prompt
+    assert "市内优先地铁" in user_prompt
+    assert "不要返回空泛描述" in system_prompt
+    assert "每一天至少 4 个时间段" in system_prompt

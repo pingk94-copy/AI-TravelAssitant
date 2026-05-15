@@ -33,6 +33,13 @@ export async function listChatMessages(token: string, sessionId: number) {
   })
 }
 
+export async function deleteChatSession(token: string, sessionId: number) {
+  return apiRequest<void>(`/api/chat/sessions/${sessionId}`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${token}` },
+  })
+}
+
 export async function streamChatReply(
   token: string,
   sessionId: number,

@@ -3,6 +3,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.agents.planner_agent import PlannerAgent
+from app.agents.search_agents import POISearchAgent, RouteSearchAgent, WeatherSearchAgent
 from app.models.trip import Trip
 from app.models.user import User
 from app.schemas.trip import ItineraryResult, TripPlanRequest, TripResponse
@@ -57,7 +58,25 @@ def to_trip_response(trip: Trip) -> TripResponse:
 
 
 def build_itinerary(payload: TripPlanRequest) -> ItineraryResult:
-    llm_result = generate_trip_with_llm(payload)
+    tool_context = build_tool_context(payload)
+    llm_result = generate_trip_with_llm(payload, tool_context=tool_context)
     if llm_result is not None:
         return llm_result
     return PlannerAgent().plan(payload)
+
+
+def build_tool_context(payload: TripPlanRequest) -> dict[str, list[str]]:
+    weather = WeatherSearchAgent().run(payload)
+    places = POISearchAgent().run(payload)
+    route = RouteSearchAgent().run(payload)
+    return {
+        "weather": [
+            f"{item.date} {item.weather} {item.temperature}" + (f" {item.wind}风" if item.wind else "")
+            for item in weather.forecast
+        ],
+        "places": [
+            f"{item.name}，地址：{item.address}" + (f"，坐标：{item.location}" if item.location else "")
+            for item in places.items
+        ],
+        "routes": [step.instruction for step in route.steps],
+    }

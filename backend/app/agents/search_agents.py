@@ -14,7 +14,7 @@ class POISearchAgent:
     name = "poi_search_agent"
 
     def run(self, payload: TripPlanRequest) -> PlaceSearchResponse:
-        keywords = " ".join(payload.preferences) if payload.preferences else "风景 美食 文化"
+        keywords = " ".join(payload.preferences) if payload.preferences else "必去景点 美食 文化"
         return search_places(keywords, payload.destination)
 
 

@@ -14,7 +14,7 @@ def search_places(keyword: str, city: str | None = None, client: AmapClient | No
     data = amap.search_places(keyword, city)
 
     if data:
-        pois = data.get("pois", [])[:5]
+        pois = data.get("pois", [])[:8]
         items = [
             PlaceItem(
                 name=poi.get("name") or keyword,
@@ -32,8 +32,8 @@ def search_places(keyword: str, city: str | None = None, client: AmapClient | No
         city=city,
         items=[
             PlaceItem(
-                name=keyword,
-                address=f"{city or '目的地城市'}旅行区域",
+                name=f"{city or '目的地'}核心游览区",
+                address=f"{city or '目的地城市'}市中心或游客常去区域",
                 location=None,
             )
         ],
@@ -65,7 +65,7 @@ def get_weather(city: str, client: AmapClient | None = None) -> WeatherResponse:
         forecast=[
             WeatherForecastItem(
                 date="规划日",
-                weather="暂未获取到天气数据",
+                weather="暂无实时天气数据",
                 temperature="出发前请再次确认",
                 wind=None,
             )
@@ -99,10 +99,15 @@ def plan_route(origin: str, destination: str, city: str | None, mode: str, clien
         mode=mode,
         steps=[
             RouteStep(
-                instruction=f"建议使用本地地图导航，从{origin}前往{destination}，并结合{city or '目的地城市'}实时交通调整路线。",
+                instruction=f"从{origin}前往{destination}建议优先查询高铁/航班；到达后市内优先使用地铁、公交或网约车。",
                 distance=None,
                 duration=None,
-            )
+            ),
+            RouteStep(
+                instruction=f"在{city or destination}跨区游玩时，把相邻景点安排在同一天，减少往返。",
+                distance=None,
+                duration=None,
+            ),
         ],
     )
 

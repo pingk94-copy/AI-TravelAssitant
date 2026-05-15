@@ -19,38 +19,44 @@ class PlannerAgent:
         weather = self.weather_agent.run(payload)
         places = self.poi_agent.run(payload)
         route = self.route_agent.run(payload)
-        preferences_text = "、".join(payload.preferences) if payload.preferences else "均衡节奏"
-        place_names = [item.name for item in places.items] or [payload.destination]
+        preferences_text = "、".join(payload.preferences) if payload.preferences else "经典景点、在地美食、交通便利"
+        place_names = [item.name for item in places.items] or [f"{payload.destination}核心游览区"]
 
         days = []
         for day_index in range(1, payload.days + 1):
             anchor = place_names[(day_index - 1) % len(place_names)]
+            next_anchor = place_names[day_index % len(place_names)]
             days.append(
                 {
                     "day": day_index,
-                    "theme": f"{payload.destination}第 {day_index} 天：{preferences_text}",
+                    "theme": f"{payload.destination}第 {day_index} 天：围绕{anchor}展开",
                     "schedule": [
                         ItineraryScheduleItem(
-                            time="09:30",
-                            title=f"从{anchor}开始",
-                            description=f"以{anchor}作为当天核心锚点，安排一条适合在{payload.destination}慢慢游玩的路线。",
+                            time="09:00",
+                            title=f"抵达并前往{anchor}",
+                            description=f"优先把住宿或集合点安排在交通方便的位置，上午前往{anchor}，减少跨城或跨区折返。",
+                        ),
+                        ItineraryScheduleItem(
+                            time="11:30",
+                            title="安排附近午餐",
+                            description=f"在{anchor}周边寻找评分稳定、排队可控的本地餐馆，避免把午餐安排得离下一站太远。",
                         ),
                         ItineraryScheduleItem(
                             time="14:00",
-                            title="周边弹性探索",
-                            description="下午预留弹性时间，可根据体力和天气选择附近美食、观景点或室内备选地点。",
+                            title=f"串联{next_anchor}",
+                            description=f"下午前往{next_anchor}或同一区域景点，按天气和体力选择深度参观或轻量散步。",
                         ),
                         ItineraryScheduleItem(
                             time="19:00",
-                            title="晚间复盘与调整",
-                            description="晚上确认交通时间，并根据当天体力和天气微调第二天安排。",
+                            title="晚餐与夜间调整",
+                            description="晚餐后确认第二天交通、预约和天气；如果当天步行较多，第二天上午降低强度。",
                         ),
                     ],
                 }
             )
 
         return ItineraryResult(
-            summary=f"这是一份从{payload.origin}出发前往{payload.destination}的 {payload.days} 天游玩方案，整体围绕{preferences_text}展开。",
+            summary=f"这是一份从{payload.origin}出发前往{payload.destination}的 {payload.days} 天游玩方案，围绕{preferences_text}安排，并尽量减少无意义折返。",
             origin=payload.origin,
             destination=payload.destination,
             weather=[item.model_dump() for item in weather.forecast],
@@ -58,8 +64,8 @@ class PlannerAgent:
             days=days,
             tips=[
                 f"预算参考：{payload.budget or '暂未填写'}。",
-                "出发前请再次确认实时天气和交通情况。",
-                "本行程由 Planner Agent 协调天气、景点和路线搜索 Agent 共同生成；配置大模型后会优先使用 LLM 生成。",
+                "热门景点、博物馆、演出和餐厅请提前预约。",
+                "本地兜底规划无法替代实时大模型；配置 OPENAI_API_KEY 后会优先调用大模型生成更细的行程。",
             ],
             agent_trace=[
                 self.weather_agent.name,
