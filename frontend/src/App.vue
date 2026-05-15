@@ -8,16 +8,16 @@ const appStore = useAppStore()
 </script>
 
 <template>
-  <div class="min-h-screen bg-[#f4f0e7] text-[#17201a]">
+  <div class="min-h-screen bg-[#f4f0e7] pb-24 text-[#17201a] md:pb-0">
     <header class="border-b border-[#d9d0bd] bg-[#f8f5ed]/90 backdrop-blur">
       <div class="mx-auto flex max-w-7xl items-center justify-between px-5 py-4">
-        <RouterLink to="/" class="flex items-center gap-3">
+        <RouterLink to="/" class="flex min-w-0 items-center gap-3">
           <span class="grid h-10 w-10 place-items-center rounded bg-[#1d3b2a] text-white">
             <Compass :size="21" />
           </span>
-          <span>
-            <span class="block text-base font-semibold">AI 智能旅行助手</span>
-            <span class="block text-xs text-[#6d746a]">Vue 3 + FastAPI 全栈项目</span>
+          <span class="min-w-0">
+            <span class="block truncate text-base font-semibold">AI 智能旅行助手</span>
+            <span class="hidden text-xs text-[#6d746a] sm:block">Vue 3 + FastAPI 全栈项目</span>
           </span>
         </RouterLink>
 
@@ -61,6 +61,23 @@ const appStore = useAppStore()
     </header>
 
     <RouterView />
+
+    <nav class="fixed inset-x-0 bottom-0 z-40 border-t border-[#d9d0bd] bg-[#f8f5ed]/95 px-3 py-2 shadow-[0_-10px_24px_rgba(23,32,26,0.08)] backdrop-blur md:hidden">
+      <div class="mx-auto grid max-w-md grid-cols-3 gap-2">
+        <RouterLink class="mobile-nav-link" to="/">
+          <MapPinned :size="19" />
+          首页
+        </RouterLink>
+        <RouterLink class="mobile-nav-link" to="/chat">
+          <MessageSquareText :size="19" />
+          对话
+        </RouterLink>
+        <RouterLink class="mobile-nav-link" to="/trips">
+          <Route :size="19" />
+          行程
+        </RouterLink>
+      </div>
+    </nav>
   </div>
 </template>
 
@@ -77,6 +94,24 @@ const appStore = useAppStore()
 }
 
 .nav-link.router-link-active {
+  background: #e7dfcf;
+  color: #17201a;
+}
+
+.mobile-nav-link {
+  display: inline-flex;
+  min-height: 3.25rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  border-radius: 6px;
+  color: #465144;
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.mobile-nav-link.router-link-active {
   background: #e7dfcf;
   color: #17201a;
 }

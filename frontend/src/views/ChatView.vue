@@ -211,7 +211,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <main class="mx-auto grid max-w-7xl gap-5 px-5 py-8 lg:grid-cols-[320px_1fr]">
+  <main class="mx-auto grid max-w-7xl gap-5 px-4 py-5 md:px-5 md:py-8 lg:grid-cols-[320px_1fr]">
     <aside class="border border-[#d9d0bd] bg-[#f8f5ed] p-5">
       <h1 class="text-lg font-semibold">旅行会话</h1>
 
@@ -258,7 +258,7 @@ onMounted(() => {
       </div>
     </aside>
 
-    <section class="flex min-h-[680px] flex-col border border-[#d9d0bd] bg-white">
+    <section class="flex min-h-[620px] flex-col border border-[#d9d0bd] bg-white md:min-h-[680px]">
       <div class="border-b border-[#d9d0bd] p-5">
         <h2 class="text-xl font-semibold">{{ activeSession?.title ?? 'AI 旅行对话' }}</h2>
         <p class="mt-1 text-sm text-[#5e675b]">回复会按标题、段落和清单拆开显示，方便阅读和复查。</p>
@@ -292,7 +292,7 @@ onMounted(() => {
           class="rounded px-4 py-3 text-sm leading-7"
           :class="
             message.role === 'user'
-              ? 'ml-auto max-w-[78%] bg-[#1d3b2a] text-white'
+              ? 'ml-auto max-w-[92%] bg-[#1d3b2a] text-white md:max-w-[78%]'
               : 'mr-auto max-w-[860px] border border-[#d9d0bd] bg-[#f8f5ed] text-[#17201a]'
           "
         >

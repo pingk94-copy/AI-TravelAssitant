@@ -163,9 +163,9 @@ onMounted(() => {
 </script>
 
 <template>
-  <main class="mx-auto grid max-w-7xl gap-5 px-5 py-8 lg:grid-cols-[380px_1fr]">
+  <main class="mx-auto grid max-w-7xl gap-5 px-4 py-5 md:px-5 md:py-8 lg:grid-cols-[380px_1fr]">
     <aside class="grid gap-5">
-      <section class="border border-[#d9d0bd] bg-[#f8f5ed] p-6">
+      <section class="border border-[#d9d0bd] bg-[#f8f5ed] p-5 md:p-6">
         <div class="mb-6 flex items-center gap-3">
           <span class="grid h-10 w-10 place-items-center rounded bg-[#1d3b2a] text-white">
             <MapPinned :size="20" />
@@ -281,7 +281,7 @@ onMounted(() => {
         </p>
       </div>
 
-      <div v-if="isPlanning" class="grid min-h-[520px] place-items-center p-8 text-center">
+      <div v-if="isPlanning" class="grid min-h-[460px] place-items-center p-6 text-center md:min-h-[520px] md:p-8">
         <div class="max-w-md">
           <span class="mx-auto grid h-14 w-14 place-items-center rounded bg-[#f7dfd6] text-[#c75532]">
             <LoaderCircle class="animate-spin" :size="28" />
@@ -298,7 +298,7 @@ onMounted(() => {
         </div>
       </div>
 
-      <div v-else-if="!activeTrip" class="grid min-h-[520px] place-items-center p-8 text-center text-[#5e675b]">
+      <div v-else-if="!activeTrip" class="grid min-h-[460px] place-items-center p-6 text-center text-[#5e675b] md:min-h-[520px] md:p-8">
         <div class="max-w-md">
           <span class="mx-auto grid h-14 w-14 place-items-center rounded bg-[#e7dfcf] text-[#1d3b2a]">
             <MapPinned :size="26" />
@@ -310,7 +310,7 @@ onMounted(() => {
         </div>
       </div>
 
-      <div v-else class="grid gap-6 p-6">
+      <div v-else class="grid gap-6 p-5 md:p-6">
         <div class="grid gap-4 rounded border border-[#d9d0bd] bg-[#f8f5ed] p-5">
           <p class="text-sm leading-7 text-[#465144]">{{ activeTrip.result.summary }}</p>
           <div class="grid gap-3 text-sm md:grid-cols-3">

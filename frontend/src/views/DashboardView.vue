@@ -10,14 +10,14 @@ const capabilityCards = [
 </script>
 
 <template>
-  <main class="mx-auto grid max-w-7xl gap-8 px-5 py-8 lg:grid-cols-[1.05fr_0.95fr]">
-    <section class="flex min-h-[520px] flex-col justify-between bg-[#1d3b2a] p-8 text-white">
+  <main class="mx-auto grid max-w-7xl gap-5 px-4 py-5 md:px-5 md:py-8 lg:grid-cols-[1.05fr_0.95fr]">
+    <section class="flex min-h-[430px] flex-col justify-between bg-[#1d3b2a] p-6 text-white md:min-h-[520px] md:p-8">
       <div class="max-w-2xl">
         <p class="mb-5 inline-flex items-center gap-2 rounded bg-white/10 px-3 py-1 text-sm text-[#d9ead5]">
           <CalendarDays :size="16" />
           可交互演示版
         </p>
-        <h1 class="max-w-3xl text-4xl font-semibold leading-tight md:text-6xl">
+        <h1 class="max-w-3xl text-3xl font-semibold leading-tight md:text-6xl">
           用 AI Agent 把旅行想法拆成可执行的行程方案。
         </h1>
       </div>
