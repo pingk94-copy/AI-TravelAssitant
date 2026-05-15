@@ -54,6 +54,15 @@ async function scrollToBottom() {
   }
 }
 
+async function scrollToMessage(messageId: number) {
+  await nextTick()
+  const container = messageList.value
+  const target = container?.querySelector<HTMLElement>(`[data-message-id="${messageId}"]`)
+  if (container && target) {
+    container.scrollTop = Math.max(target.offsetTop - container.offsetTop, 0)
+  }
+}
+
 async function refreshSessions() {
   if (!appStore.token) return
   sessions.value = await listChatSessions(appStore.token)
@@ -147,15 +156,17 @@ async function sendMessage() {
     created_at: new Date().toISOString(),
   }
   messages.value.push(assistantMessage)
-  await scrollToBottom()
+  await scrollToMessage(assistantMessage.id)
 
   try {
-    await streamChatReply(appStore.token, activeSession.value.id, userText, async (token) => {
+    await streamChatReply(appStore.token, activeSession.value.id, userText, (token) => {
       assistantMessage.content += token
-      await scrollToBottom()
     })
     messages.value = await listChatMessages(appStore.token, activeSession.value.id)
-    await scrollToBottom()
+    const savedAssistant = [...messages.value].reverse().find((message) => message.role === 'assistant')
+    if (savedAssistant) {
+      await scrollToMessage(savedAssistant.id)
+    }
   } catch (error) {
     errorMessage.value = error instanceof Error ? error.message : 'AI 回复生成失败，请稍后重试。'
   } finally {
@@ -291,6 +302,7 @@ onMounted(() => {
         <article
           v-for="message in messages"
           :key="message.id"
+          :data-message-id="message.id"
           class="rounded px-4 py-3 text-sm leading-7"
           :class="
             message.role === 'user'
