@@ -13,6 +13,19 @@ export type ChatMessage = {
   created_at: string
 }
 
+export type LlmHealth = {
+  status: 'configured' | 'disabled'
+  enabled: boolean
+  api_key_configured: boolean
+  base_url: string
+  model: string
+  timeout_seconds: number
+}
+
+export async function getLlmHealth() {
+  return apiRequest<LlmHealth>('/api/health/llm')
+}
+
 export async function createChatSession(token: string, title: string) {
   return apiRequest<ChatSession>('/api/chat/sessions', {
     method: 'POST',
@@ -56,7 +69,7 @@ export async function streamChatReply(
   })
 
   if (!response.ok || response.body === null) {
-    throw new Error(`Chat stream failed with status ${response.status}`)
+    throw new Error(`AI 回复请求失败，状态码 ${response.status}`)
   }
 
   const reader = response.body.getReader()

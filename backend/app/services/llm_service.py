@@ -83,6 +83,23 @@ def build_fallback_assistant_reply(user_message: str) -> str:
 
 
 def build_llm_error_reply(user_message: str, client: LLMClient, error: Exception) -> str:
+    if isinstance(error, httpx.ReadTimeout):
+        return (
+            "### 模型服务响应超时\n"
+            "后端已经启动，也已经收到你的请求，但外部模型服务没有在限定时间内返回。\n\n"
+            "### 当前连接\n"
+            f"- 当前模型：`{client.settings.model}`\n"
+            f"- 当前接口：`{client.settings.base_url}`\n"
+            f"- 超时时间：{client.settings.timeout_seconds:g} 秒\n\n"
+            "### 可以怎么处理\n"
+            "- 先确认 `OPENAI_API_KEY`、`OPENAI_BASE_URL`、`OPENAI_MODEL` 属于同一个服务商\n"
+            "- 如果配置正确，通常是服务商网络或模型排队，请稍后重试\n"
+            "- 也可以把 `OPENAI_TIMEOUT_SECONDS` 调大后重启项目\n\n"
+            "### 本次请求\n"
+            f"{user_message}\n\n"
+            "错误类型：`ReadTimeout`"
+        )
+
     return (
         "### 大模型调用失败\n"
         "后端已经收到你的请求，但模型服务没有成功返回。\n\n"

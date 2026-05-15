@@ -5,8 +5,10 @@ import { computed, nextTick, onMounted, ref } from 'vue'
 import {
   type ChatMessage,
   type ChatSession,
+  type LlmHealth,
   createChatSession,
   deleteChatSession,
+  getLlmHealth,
   listChatMessages,
   listChatSessions,
   streamChatReply,
@@ -29,9 +31,21 @@ const sessionTitle = ref('')
 const isStreaming = ref(false)
 const isDeleting = ref(false)
 const errorMessage = ref('')
+const llmHealth = ref<LlmHealth | null>(null)
+const llmHealthError = ref('')
 const messageList = ref<HTMLElement | null>(null)
 
 const canSend = computed(() => Boolean(activeSession.value && draft.value.trim() && !isStreaming.value))
+const llmStatusText = computed(() => {
+  if (llmHealthError.value) return '模型状态获取失败'
+  if (!llmHealth.value) return '正在检查模型状态'
+  return llmHealth.value.enabled ? '大模型已配置' : '大模型未配置'
+})
+const llmStatusClass = computed(() => {
+  if (llmHealth.value?.enabled) return 'border-[#b8d8bf] bg-[#eef8ef] text-[#1d5a2c]'
+  if (llmHealthError.value) return 'border-[#edc7b8] bg-[#fff4ef] text-[#9d3d20]'
+  return 'border-[#d9d0bd] bg-[#f8f5ed] text-[#5e675b]'
+})
 
 async function scrollToBottom() {
   await nextTick()
@@ -45,6 +59,15 @@ async function refreshSessions() {
   sessions.value = await listChatSessions(appStore.token)
   if (!activeSession.value && sessions.value.length > 0) {
     await selectSession(sessions.value[0])
+  }
+}
+
+async function refreshLlmHealth() {
+  try {
+    llmHealth.value = await getLlmHealth()
+    llmHealthError.value = ''
+  } catch (error) {
+    llmHealthError.value = error instanceof Error ? error.message : '模型状态检查失败。'
   }
 }
 
@@ -180,6 +203,7 @@ function renderBlocks(content: string): RenderBlock[] {
 }
 
 onMounted(() => {
+  refreshLlmHealth()
   refreshSessions().catch((error) => {
     errorMessage.value = error instanceof Error ? error.message : '会话列表加载失败，请刷新页面重试。'
   })
@@ -238,6 +262,23 @@ onMounted(() => {
       <div class="border-b border-[#d9d0bd] p-5">
         <h2 class="text-xl font-semibold">{{ activeSession?.title ?? 'AI 旅行对话' }}</h2>
         <p class="mt-1 text-sm text-[#5e675b]">回复会按标题、段落和清单拆开显示，方便阅读和复查。</p>
+        <div class="mt-4 rounded border px-4 py-3 text-sm" :class="llmStatusClass">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <span class="font-semibold">{{ llmStatusText }}</span>
+            <button class="text-xs font-semibold underline-offset-4 hover:underline" type="button" @click="refreshLlmHealth">
+              重新检查
+            </button>
+          </div>
+          <p v-if="llmHealth" class="mt-2 leading-6">
+            当前模型：{{ llmHealth.model }} · 接口：{{ llmHealth.base_url }} · 超时：{{ llmHealth.timeout_seconds }} 秒
+          </p>
+          <p v-if="llmHealth && !llmHealth.enabled" class="mt-2 leading-6">
+            请在 backend\.env 填入真实 OPENAI_API_KEY 后，重新执行一键启动脚本。
+          </p>
+          <p v-if="llmHealthError" class="mt-2 leading-6">
+            {{ llmHealthError }}
+          </p>
+        </div>
       </div>
 
       <div ref="messageList" class="flex-1 space-y-5 overflow-y-auto p-5">

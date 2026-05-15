@@ -1,5 +1,7 @@
 from datetime import date
 
+import httpx
+
 from app.schemas.trip import TripPlanRequest
 from app.services.llm_service import LLMClient, LLMSettings, build_assistant_reply, generate_trip_with_llm
 
@@ -28,6 +30,11 @@ class FakeResponse:
 class FailingTransport:
     def post(self, url: str, **kwargs):
         raise RuntimeError("provider rejected request")
+
+
+class TimeoutTransport:
+    def post(self, url: str, **kwargs):
+        raise httpx.ReadTimeout("provider timeout")
 
 
 def test_llm_client_returns_chat_completion_content():
@@ -66,6 +73,24 @@ def test_chat_fallback_explains_provider_failure_when_key_is_configured():
 
     assert "大模型调用失败" in content
     assert "bad-model" in content
+
+
+def test_chat_fallback_explains_timeout_is_provider_response_problem():
+    client = LLMClient(
+        LLMSettings(
+            api_key="test-key",
+            model="slow-model",
+            base_url="https://api.siliconflow.cn/v1",
+            timeout_seconds=12,
+        ),
+        transport=TimeoutTransport(),
+    )
+
+    content = build_assistant_reply("从湘潭到萍乡", client)
+
+    assert "模型服务响应超时" in content
+    assert "后端已经启动" in content
+    assert "12 秒" in content
 
 
 def test_chat_prompt_requires_readable_sections_instead_of_wall_of_text():
