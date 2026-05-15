@@ -24,6 +24,8 @@ start-dev.vbs
 .\start-dev.ps1
 ```
 
+终端方式会显示启动进度、后端健康检查结果和日志路径。看到“启动完成，正在打开浏览器”后，说明前后端都已经启动。
+
 如果 PowerShell 不允许执行脚本，就执行：
 
 ```powershell
@@ -36,6 +38,8 @@ start-dev.vbs
 - 清理旧的前端端口 `5173`
 - 在后台启动后端 FastAPI
 - 在后台启动前端 Vite
+- 等待后端健康检查 `http://127.0.0.1:8000/api/health`
+- 等待前端页面 `http://127.0.0.1:5173`
 - 启动成功后自动打开浏览器页面
 
 浏览器会打开：
@@ -47,11 +51,19 @@ http://127.0.0.1:5173
 脚本不会再弹出两个后端/前端命令行窗口。日志会写到：
 
 ```text
-logs\backend.out.log
-logs\backend.err.log
-logs\frontend.out.log
-logs\frontend.err.log
+logs\backend-时间.out.log
+logs\backend-时间.err.log
+logs\frontend-时间.out.log
+logs\frontend-时间.err.log
 ```
+
+如果浏览器能打开，但 AI 对话里显示“大模型调用失败”，这通常不是后端没启动，而是后端调用模型服务时超时或配置不匹配。可以先在浏览器打开下面地址确认后端是否正常：
+
+```text
+http://127.0.0.1:8000/api/health
+```
+
+如果返回 `{"status":"ok" ...}`，说明后端已启动；接下来重点检查 `backend\.env` 里的 `OPENAI_API_KEY`、`OPENAI_BASE_URL`、`OPENAI_MODEL` 是否属于同一个服务商，或稍后重试模型服务。
 
 ## 配置大模型 API Key
 
