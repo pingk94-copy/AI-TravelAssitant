@@ -200,8 +200,8 @@ onMounted(() => {
 </script>
 
 <template>
-  <main class="mx-auto grid max-w-7xl gap-5 px-4 py-5 md:px-5 md:py-8 lg:grid-cols-[380px_1fr]">
-    <aside class="grid gap-5">
+  <main class="mx-auto grid max-w-7xl gap-5 px-4 py-5 md:px-5 md:py-8 lg:h-[calc(100vh-73px)] lg:grid-cols-[380px_1fr] lg:py-6">
+    <aside class="grid min-h-0 gap-5 overflow-y-auto pr-0 lg:pr-1">
       <section class="border border-[#d9d0bd] bg-[#f8f5ed] p-5 md:p-6">
         <div class="mb-6 flex items-center gap-3">
           <span class="grid h-10 w-10 place-items-center rounded bg-[#1d3b2a] text-white">
@@ -331,8 +331,8 @@ onMounted(() => {
       </section>
     </aside>
 
-    <section class="border border-[#d9d0bd] bg-white">
-      <div class="flex flex-wrap items-start justify-between gap-4 border-b border-[#d9d0bd] p-6">
+    <section class="flex min-h-[620px] flex-col border border-[#d9d0bd] bg-white lg:min-h-0">
+      <div class="shrink-0 flex flex-wrap items-start justify-between gap-4 border-b border-[#d9d0bd] p-6">
         <div>
           <h2 class="text-xl font-semibold">{{ activeTrip?.title ?? '暂无行程' }}</h2>
           <p v-if="activeTrip" class="mt-1 flex items-center gap-2 text-sm text-[#5e675b]">
@@ -358,7 +358,7 @@ onMounted(() => {
         </button>
       </div>
 
-      <div v-if="isPlanning" class="grid min-h-[460px] place-items-center p-6 text-center md:min-h-[520px] md:p-8">
+      <div v-if="isPlanning" class="grid min-h-[460px] flex-1 place-items-center overflow-y-auto p-6 text-center md:min-h-[520px] md:p-8 lg:min-h-0">
         <div class="max-w-md">
           <span class="mx-auto grid h-14 w-14 place-items-center rounded bg-[#f7dfd6] text-[#c75532]">
             <LoaderCircle class="animate-spin" :size="28" />
@@ -375,7 +375,7 @@ onMounted(() => {
         </div>
       </div>
 
-      <div v-else-if="!activeTrip" class="grid min-h-[460px] place-items-center p-6 text-center text-[#5e675b] md:min-h-[520px] md:p-8">
+      <div v-else-if="!activeTrip" class="grid min-h-[460px] flex-1 place-items-center overflow-y-auto p-6 text-center text-[#5e675b] md:min-h-[520px] md:p-8 lg:min-h-0">
         <div class="max-w-md">
           <span class="mx-auto grid h-14 w-14 place-items-center rounded bg-[#e7dfcf] text-[#1d3b2a]">
             <MapPinned :size="26" />
@@ -387,7 +387,7 @@ onMounted(() => {
         </div>
       </div>
 
-      <div v-else class="grid gap-6 p-5 md:p-6">
+      <div v-else class="grid min-h-0 flex-1 gap-6 overflow-y-auto p-5 md:p-6">
         <div class="grid gap-4 rounded border border-[#d9d0bd] bg-[#f8f5ed] p-5">
           <p class="text-sm leading-7 text-[#465144]">{{ activeTrip.result.summary }}</p>
           <div class="grid gap-3 text-sm md:grid-cols-3">
