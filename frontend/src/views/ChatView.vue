@@ -36,13 +36,13 @@ const llmHealthError = ref('')
 const messageList = ref<HTMLElement | null>(null)
 
 const canSend = computed(() => Boolean(activeSession.value && draft.value.trim() && !isStreaming.value))
+const shouldShowLlmStatus = computed(() => Boolean(!llmHealth.value?.enabled || llmHealthError.value))
 const llmStatusText = computed(() => {
   if (llmHealthError.value) return '模型状态获取失败'
   if (!llmHealth.value) return '正在检查模型状态'
   return llmHealth.value.enabled ? '大模型已配置' : '大模型未配置'
 })
 const llmStatusClass = computed(() => {
-  if (llmHealth.value?.enabled) return 'border-[#b8d8bf] bg-[#eef8ef] text-[#1d5a2c]'
   if (llmHealthError.value) return 'border-[#edc7b8] bg-[#fff4ef] text-[#9d3d20]'
   return 'border-[#d9d0bd] bg-[#f8f5ed] text-[#5e675b]'
 })
@@ -222,7 +222,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <main class="mx-auto grid max-w-7xl gap-5 px-4 py-5 md:h-[calc(100vh-73px)] md:px-5 md:py-6 lg:grid-cols-[320px_1fr]">
+  <main class="mx-auto grid max-w-[112rem] gap-5 px-4 py-5 md:h-[calc(100vh-73px)] md:px-6 md:py-6 lg:grid-cols-[320px_1fr]">
     <aside class="flex min-h-0 flex-col border border-[#d9d0bd] bg-[#f8f5ed] p-5">
       <div class="shrink-0">
         <h1 class="text-lg font-semibold">旅行会话</h1>
@@ -275,7 +275,7 @@ onMounted(() => {
       <div class="shrink-0 border-b border-[#d9d0bd] p-5">
         <h2 class="text-xl font-semibold">{{ activeSession?.title ?? 'AI 旅行对话' }}</h2>
         <p class="mt-1 text-sm text-[#5e675b]">回复会按标题、段落和清单拆开显示，方便阅读和复查。</p>
-        <div class="mt-4 rounded border px-4 py-3 text-sm" :class="llmStatusClass">
+        <div v-if="shouldShowLlmStatus" class="mt-4 rounded border px-4 py-3 text-sm" :class="llmStatusClass">
           <div class="flex flex-wrap items-center justify-between gap-2">
             <span class="font-semibold">{{ llmStatusText }}</span>
             <button class="text-xs font-semibold underline-offset-4 hover:underline" type="button" @click="refreshLlmHealth">

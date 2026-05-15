@@ -200,7 +200,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <main class="mx-auto grid max-w-7xl gap-5 px-4 py-5 md:px-5 md:py-8 lg:h-[calc(100vh-73px)] lg:grid-cols-[380px_1fr] lg:py-6">
+  <main class="mx-auto grid max-w-[112rem] gap-5 px-4 py-5 md:px-6 md:py-8 lg:h-[calc(100vh-73px)] lg:grid-cols-[340px_minmax(0,1fr)] lg:py-6 xl:grid-cols-[360px_minmax(0,1fr)] 2xl:grid-cols-[380px_minmax(0,1fr)]">
     <aside class="grid min-h-0 gap-5 overflow-y-auto pr-0 lg:pr-1">
       <section class="border border-[#d9d0bd] bg-[#f8f5ed] p-5 md:p-6">
         <div class="mb-6 flex items-center gap-3">
@@ -387,10 +387,10 @@ onMounted(() => {
         </div>
       </div>
 
-      <div v-else class="grid min-h-0 flex-1 gap-6 overflow-y-auto p-5 md:p-6">
+      <div v-else class="grid min-h-0 flex-1 gap-6 overflow-y-auto p-5 md:p-6 xl:p-8">
         <div class="grid gap-4 rounded border border-[#d9d0bd] bg-[#f8f5ed] p-5">
           <p class="text-sm leading-7 text-[#465144]">{{ activeTrip.result.summary }}</p>
-          <div class="grid gap-3 text-sm md:grid-cols-3">
+          <div class="grid gap-3 text-sm md:grid-cols-3 xl:gap-4">
             <div class="rounded border border-[#eadfca] bg-white p-3">
               <p class="text-xs text-[#7a8175]">路线</p>
               <p class="mt-1 font-semibold">{{ activeTrip.origin }} → {{ activeTrip.destination }}</p>

@@ -10,7 +10,7 @@ const appStore = useAppStore()
 <template>
   <div class="min-h-screen bg-[#f4f0e7] pb-24 text-[#17201a] md:pb-0">
     <header class="border-b border-[#d9d0bd] bg-[#f8f5ed]/90 backdrop-blur">
-      <div class="mx-auto flex max-w-7xl items-center justify-between px-5 py-4">
+      <div class="mx-auto flex max-w-[112rem] items-center justify-between px-5 py-4 md:px-6">
         <RouterLink to="/" class="flex min-w-0 items-center gap-3">
           <span class="grid h-10 w-10 place-items-center rounded bg-[#1d3b2a] text-white">
             <Compass :size="21" />
