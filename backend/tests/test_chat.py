@@ -111,6 +111,28 @@ def test_delete_chat_session_removes_session_and_messages(client: TestClient):
     assert client.get(f"/api/chat/sessions/{session_id}/messages", headers=auth_headers(token)).status_code == 404
 
 
+def test_clear_chat_messages_keeps_session_but_removes_messages(client: TestClient):
+    token = register_and_get_token(client)
+    session_id = client.post(
+        "/api/chat/sessions",
+        json={"title": "Keep session"},
+        headers=auth_headers(token),
+    ).json()["id"]
+    with client.stream(
+        "POST",
+        f"/api/chat/sessions/{session_id}/stream",
+        json={"message": "Plan Changsha"},
+        headers=auth_headers(token),
+    ):
+        pass
+
+    response = client.delete(f"/api/chat/sessions/{session_id}/messages", headers=auth_headers(token))
+
+    assert response.status_code == 204
+    assert client.get("/api/chat/sessions", headers=auth_headers(token)).json()[0]["id"] == session_id
+    assert client.get(f"/api/chat/sessions/{session_id}/messages", headers=auth_headers(token)).json() == []
+
+
 def test_delete_chat_session_is_limited_to_current_user(client: TestClient):
     first_token = register_and_get_token(client)
     session_id = client.post(

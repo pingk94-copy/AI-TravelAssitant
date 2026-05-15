@@ -8,6 +8,7 @@ from app.models.user import User
 from app.schemas.chat import ChatMessageResponse, ChatSessionCreate, ChatSessionResponse, ChatStreamRequest
 from app.services.chat_service import (
     build_assistant_reply,
+    clear_messages,
     create_session,
     delete_session,
     get_session_for_user,
@@ -56,6 +57,16 @@ def delete_chat_session(
 ) -> None:
     session = get_session_for_user(db, current_user, session_id)
     delete_session(db, session)
+
+
+@router.delete("/sessions/{session_id}/messages", status_code=204)
+def clear_chat_messages(
+    session_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> None:
+    session = get_session_for_user(db, current_user, session_id)
+    clear_messages(db, session)
 
 
 @router.post("/sessions/{session_id}/stream")

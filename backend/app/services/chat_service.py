@@ -47,3 +47,9 @@ def save_message(db: Session, session: ChatSession, role: str, content: str) -> 
 def delete_session(db: Session, session: ChatSession) -> None:
     db.delete(session)
     db.commit()
+
+
+def clear_messages(db: Session, session: ChatSession) -> None:
+    for message in list_messages(db, session):
+        db.delete(message)
+    db.commit()

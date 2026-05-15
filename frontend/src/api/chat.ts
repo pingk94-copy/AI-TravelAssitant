@@ -53,6 +53,13 @@ export async function deleteChatSession(token: string, sessionId: number) {
   })
 }
 
+export async function clearChatMessages(token: string, sessionId: number) {
+  return apiRequest<void>(`/api/chat/sessions/${sessionId}/messages`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${token}` },
+  })
+}
+
 export async function streamChatReply(
   token: string,
   sessionId: number,

@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { AlertTriangle, LoaderCircle, MessageSquarePlus, SendHorizontal, Trash2, X } from 'lucide-vue-next'
+import { AlertTriangle, Eraser, LoaderCircle, MessageSquarePlus, SendHorizontal, Trash2, X } from 'lucide-vue-next'
 import { computed, nextTick, onMounted, ref } from 'vue'
 
 import {
   type ChatMessage,
   type ChatSession,
   type LlmHealth,
+  clearChatMessages,
   createChatSession,
   deleteChatSession,
   getLlmHealth,
@@ -30,6 +31,7 @@ const draft = ref('')
 const sessionTitle = ref('')
 const isStreaming = ref(false)
 const isDeleting = ref(false)
+const isClearing = ref(false)
 const errorMessage = ref('')
 const llmHealth = ref<LlmHealth | null>(null)
 const llmHealthError = ref('')
@@ -133,6 +135,25 @@ async function confirmDeleteSession() {
     errorMessage.value = error instanceof Error ? error.message : '删除会话失败，请稍后重试。'
   } finally {
     isDeleting.value = false
+  }
+}
+
+async function clearActiveMessages() {
+  if (!appStore.token || !activeSession.value || isStreaming.value || isClearing.value) return
+  isClearing.value = true
+  errorMessage.value = ''
+
+  try {
+    await clearChatMessages(appStore.token, activeSession.value.id)
+    messages.value = []
+    await nextTick()
+    if (messageList.value) {
+      messageList.value.scrollTop = 0
+    }
+  } catch (error) {
+    errorMessage.value = error instanceof Error ? error.message : '清空会话内容失败，请稍后重试。'
+  } finally {
+    isClearing.value = false
   }
 }
 
@@ -274,8 +295,23 @@ onMounted(() => {
 
     <section class="app-surface flex min-h-[620px] flex-col md:min-h-0">
       <div class="shrink-0 border-b border-[#d9d0bd] p-5">
-        <h2 class="text-xl font-extrabold">{{ activeSession?.title ?? 'AI 旅行对话' }}</h2>
-        <p class="mt-1 text-sm text-[#5e675b]">回复会按标题、段落和清单拆开显示，方便阅读和复查。</p>
+        <div class="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h2 class="text-xl font-extrabold">{{ activeSession?.title ?? 'AI 旅行对话' }}</h2>
+            <p class="mt-1 text-sm text-[#5e675b]">回复会按标题、段落和清单拆开显示，方便阅读和复查。</p>
+          </div>
+          <button
+            v-if="activeSession"
+            class="app-button-secondary h-10 px-3 text-sm disabled:opacity-60"
+            :disabled="messages.length === 0 || isStreaming || isClearing"
+            type="button"
+            @click="clearActiveMessages"
+          >
+            <LoaderCircle v-if="isClearing" class="animate-spin" :size="16" />
+            <Eraser v-else :size="16" />
+            清空内容
+          </button>
+        </div>
         <div v-if="shouldShowLlmStatus" class="mt-4 rounded-lg border px-4 py-3 text-sm" :class="llmStatusClass">
           <div class="flex flex-wrap items-center justify-between gap-2">
             <span class="font-semibold">{{ llmStatusText }}</span>
@@ -301,6 +337,13 @@ onMounted(() => {
             <span class="app-icon mx-auto"><MessageSquarePlus :size="22" /></span>
             <h3 class="mt-4 text-lg font-extrabold text-[#17201a]">先创建一个旅行会话</h3>
             <p class="mt-2 text-sm leading-7">你可以用自然语言讨论路线、预算、住宿区域和每日安排。</p>
+          </div>
+        </div>
+        <div v-else-if="messages.length === 0" class="flex h-full items-center justify-center p-6 text-center text-[#5e675b]">
+          <div class="max-w-sm">
+            <span class="app-icon mx-auto"><Eraser :size="22" /></span>
+            <h3 class="mt-4 text-lg font-extrabold text-[#17201a]">当前会话内容为空</h3>
+            <p class="mt-2 text-sm leading-7">左侧会话已经保留，你可以直接在下面输入新的旅行问题。</p>
           </div>
         </div>
 
