@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { LoaderCircle, MessageSquarePlus, SendHorizontal, Trash2 } from 'lucide-vue-next'
+import { AlertTriangle, LoaderCircle, MessageSquarePlus, SendHorizontal, Trash2, X } from 'lucide-vue-next'
 import { computed, nextTick, onMounted, ref } from 'vue'
 
 import {
@@ -22,10 +22,12 @@ type RenderBlock = {
 const appStore = useAppStore()
 const sessions = ref<ChatSession[]>([])
 const activeSession = ref<ChatSession | null>(null)
+const pendingDeleteSession = ref<ChatSession | null>(null)
 const messages = ref<ChatMessage[]>([])
 const draft = ref('')
 const sessionTitle = ref('')
 const isStreaming = ref(false)
+const isDeleting = ref(false)
 const errorMessage = ref('')
 const messageList = ref<HTMLElement | null>(null)
 
@@ -68,19 +70,37 @@ async function startSession() {
   errorMessage.value = ''
 }
 
-async function removeSession(session: ChatSession) {
-  if (!appStore.token || isStreaming.value) return
-  const confirmed = window.confirm(`确定删除「${session.title}」吗？`)
-  if (!confirmed) return
+function requestDeleteSession(session: ChatSession) {
+  if (isStreaming.value) return
+  pendingDeleteSession.value = session
+}
 
-  await deleteChatSession(appStore.token, session.id)
-  sessions.value = sessions.value.filter((item) => item.id !== session.id)
-  if (activeSession.value?.id === session.id) {
-    activeSession.value = sessions.value[0] ?? null
-    messages.value = []
-    if (activeSession.value) {
-      await selectSession(activeSession.value)
+function cancelDeleteSession() {
+  if (isDeleting.value) return
+  pendingDeleteSession.value = null
+}
+
+async function confirmDeleteSession() {
+  if (!appStore.token || !pendingDeleteSession.value) return
+  const session = pendingDeleteSession.value
+  isDeleting.value = true
+  errorMessage.value = ''
+
+  try {
+    await deleteChatSession(appStore.token, session.id)
+    sessions.value = sessions.value.filter((item) => item.id !== session.id)
+    if (activeSession.value?.id === session.id) {
+      activeSession.value = sessions.value[0] ?? null
+      messages.value = []
+      if (activeSession.value) {
+        await selectSession(activeSession.value)
+      }
     }
+    pendingDeleteSession.value = null
+  } catch (error) {
+    errorMessage.value = error instanceof Error ? error.message : '删除会话失败，请稍后重试。'
+  } finally {
+    isDeleting.value = false
   }
 }
 
@@ -206,7 +226,7 @@ onMounted(() => {
             class="inline-flex h-8 w-8 items-center justify-center rounded text-[#8b4a36] hover:bg-white"
             title="删除会话"
             type="button"
-            @click="removeSession(session)"
+            @click="requestDeleteSession(session)"
           >
             <Trash2 :size="15" />
           </button>
@@ -281,5 +301,64 @@ onMounted(() => {
         </button>
       </form>
     </section>
+
+    <Teleport to="body">
+      <div
+        v-if="pendingDeleteSession"
+        class="fixed inset-0 z-50 grid place-items-center bg-[#17201a]/45 px-4 backdrop-blur-sm"
+        @click.self="cancelDeleteSession"
+      >
+        <section class="w-full max-w-md border border-[#d9d0bd] bg-white shadow-2xl">
+          <div class="flex items-start justify-between gap-4 border-b border-[#eadfca] p-5">
+            <div class="flex gap-3">
+              <span class="grid h-10 w-10 shrink-0 place-items-center rounded bg-[#f7dfd6] text-[#b4442a]">
+                <AlertTriangle :size="20" />
+              </span>
+              <div>
+                <h2 class="text-lg font-semibold">删除这个会话？</h2>
+                <p class="mt-1 text-sm leading-6 text-[#5e675b]">
+                  删除后，会话和其中的聊天记录都会被移除，无法在页面中恢复。
+                </p>
+              </div>
+            </div>
+            <button
+              class="grid h-8 w-8 place-items-center rounded text-[#5e675b] hover:bg-[#f4f0e7]"
+              type="button"
+              @click="cancelDeleteSession"
+            >
+              <X :size="18" />
+            </button>
+          </div>
+
+          <div class="grid gap-2 p-5">
+            <p class="text-sm text-[#5e675b]">即将删除</p>
+            <p class="rounded border border-[#eadfca] bg-[#f8f5ed] px-3 py-3 font-semibold">
+              {{ pendingDeleteSession.title }}
+            </p>
+          </div>
+
+          <div class="flex justify-end gap-3 border-t border-[#eadfca] p-5">
+            <button
+              class="h-10 rounded border border-[#cfc4ae] bg-white px-4 text-sm font-semibold text-[#465144] hover:bg-[#f8f5ed]"
+              :disabled="isDeleting"
+              type="button"
+              @click="cancelDeleteSession"
+            >
+              取消
+            </button>
+            <button
+              class="inline-flex h-10 items-center justify-center gap-2 rounded bg-[#b4442a] px-4 text-sm font-semibold text-white disabled:opacity-60"
+              :disabled="isDeleting"
+              type="button"
+              @click="confirmDeleteSession"
+            >
+              <LoaderCircle v-if="isDeleting" class="animate-spin" :size="16" />
+              <Trash2 v-else :size="16" />
+              确认删除
+            </button>
+          </div>
+        </section>
+      </div>
+    </Teleport>
   </main>
 </template>
