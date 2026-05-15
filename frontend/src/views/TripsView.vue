@@ -1,5 +1,16 @@
 <script setup lang="ts">
-import { AlertTriangle, CalendarDays, LoaderCircle, MapPinned, Sparkles, Trash2, X } from 'lucide-vue-next'
+import {
+  AlertTriangle,
+  CalendarDays,
+  CloudSun,
+  LoaderCircle,
+  MapPinned,
+  RefreshCw,
+  Sparkles,
+  Trash2,
+  WalletCards,
+  X,
+} from 'lucide-vue-next'
 import { computed, onMounted, ref } from 'vue'
 
 import { getTask } from '../api/tasks'
@@ -22,6 +33,14 @@ const isPlanning = ref(false)
 const isDeleting = ref(false)
 const errorMessage = ref('')
 const taskStatus = ref('')
+const lastPayload = ref<{
+  origin: string
+  destination: string
+  start_date: string
+  days: number
+  budget?: string
+  preferences: string[]
+} | null>(null)
 
 const canSubmit = computed(() => {
   return Boolean(form.value.origin.trim() && form.value.destination.trim() && form.value.start_date && !isPlanning.value)
@@ -46,30 +65,34 @@ function preferencesList() {
     .filter(Boolean)
 }
 
-async function submitPlan() {
+async function submitPlan(useLastPayload = false) {
   if (!appStore.token) {
     errorMessage.value = '请先登录，再提交行程规划。'
     return
   }
-  if (!canSubmit.value) {
+  if (!useLastPayload && !canSubmit.value) {
     errorMessage.value = '请至少填写出发地、目的地和出发日期。'
     return
   }
+  const payload = useLastPayload && lastPayload.value
+    ? lastPayload.value
+    : {
+        origin: form.value.origin.trim(),
+        destination: form.value.destination.trim(),
+        start_date: form.value.start_date,
+        days: Number(form.value.days),
+        budget: form.value.budget.trim() || undefined,
+        preferences: preferencesList(),
+      }
+  lastPayload.value = payload
 
   isPlanning.value = true
   errorMessage.value = ''
-  taskStatus.value = '正在提交行程规划任务...'
+  taskStatus.value = '正在整理城市、天气、路线和偏好信息...'
 
   try {
-    const task = await planTripAsync(appStore.token, {
-      origin: form.value.origin.trim(),
-      destination: form.value.destination.trim(),
-      start_date: form.value.start_date,
-      days: Number(form.value.days),
-      budget: form.value.budget.trim() || undefined,
-      preferences: preferencesList(),
-    })
-    taskStatus.value = `任务 #${task.task_id} 已提交，正在获取规划结果...`
+    const task = await planTripAsync(appStore.token, payload)
+    taskStatus.value = `任务 #${task.task_id} 已提交，正在生成可执行行程...`
     const taskResult = await getTask(appStore.token, task.task_id)
     const trip = taskResult.output?.trip
     if (!trip) {
@@ -77,12 +100,17 @@ async function submitPlan() {
     }
     activeTrip.value = trip
     trips.value = [trip, ...trips.value.filter((item) => item.id !== trip.id)]
-    taskStatus.value = `任务 #${task.task_id} 已完成。`
+    taskStatus.value = `任务 #${task.task_id} 已完成，已保存到历史行程。`
   } catch (error) {
     errorMessage.value = error instanceof Error ? error.message : '行程规划失败，请稍后重试。'
   } finally {
     isPlanning.value = false
   }
+}
+
+function retryLastPlan() {
+  if (!lastPayload.value || isPlanning.value) return
+  submitPlan(true)
 }
 
 function requestDeleteTrip(trip: TripResponse) {
@@ -121,6 +149,10 @@ function formatCreatedAt(value: string) {
     hour: '2-digit',
     minute: '2-digit',
   }).format(new Date(value))
+}
+
+function statusLabel(status: string) {
+  return status === 'success' ? '已生成' : status
 }
 
 onMounted(() => {
@@ -181,8 +213,26 @@ onMounted(() => {
           </button>
         </form>
 
-        <p v-if="errorMessage" class="mt-4 text-sm text-[#b4442a]">{{ errorMessage }}</p>
-        <p v-if="taskStatus" class="mt-3 text-sm text-[#5e675b]">{{ taskStatus }}</p>
+        <div v-if="errorMessage" class="mt-4 rounded border border-[#edc7b8] bg-[#fff4ef] p-3 text-sm leading-6 text-[#9d3d20]">
+          <p class="font-semibold">生成失败</p>
+          <p>{{ errorMessage }}</p>
+          <button
+            v-if="lastPayload"
+            class="mt-3 inline-flex h-9 items-center justify-center gap-2 rounded border border-[#d9a08a] bg-white px-3 text-xs font-semibold"
+            type="button"
+            @click="retryLastPlan"
+          >
+            <RefreshCw :size="14" />
+            重新生成
+          </button>
+        </div>
+        <div v-if="taskStatus" class="mt-4 rounded border border-[#d9d0bd] bg-white p-3 text-sm leading-6 text-[#5e675b]">
+          <div class="flex items-center gap-2">
+            <LoaderCircle v-if="isPlanning" class="animate-spin text-[#c75532]" :size="16" />
+            <Sparkles v-else class="text-[#c75532]" :size="16" />
+            <span>{{ taskStatus }}</span>
+          </div>
+        </div>
       </section>
 
       <section class="border border-[#d9d0bd] bg-white p-5">
@@ -227,18 +277,78 @@ onMounted(() => {
         <h2 class="text-xl font-semibold">{{ activeTrip?.title ?? '暂无行程' }}</h2>
         <p v-if="activeTrip" class="mt-1 flex items-center gap-2 text-sm text-[#5e675b]">
           <CalendarDays :size="16" />
-          {{ activeTrip.start_date }} · {{ activeTrip.days }} 天 · {{ activeTrip.status }}
+          {{ activeTrip.start_date }} · {{ activeTrip.days }} 天 · {{ statusLabel(activeTrip.status) }}
         </p>
       </div>
 
-      <div v-if="!activeTrip" class="flex min-h-[520px] items-center justify-center p-8 text-center text-[#5e675b]">
-        填写真实出发地、目的地和日期后，这里会展示按天拆分的结构化行程。
+      <div v-if="isPlanning" class="grid min-h-[520px] place-items-center p-8 text-center">
+        <div class="max-w-md">
+          <span class="mx-auto grid h-14 w-14 place-items-center rounded bg-[#f7dfd6] text-[#c75532]">
+            <LoaderCircle class="animate-spin" :size="28" />
+          </span>
+          <h3 class="mt-5 text-xl font-semibold">正在生成行程</h3>
+          <p class="mt-3 text-sm leading-7 text-[#5e675b]">
+            正在结合出发城市、目的地、天气、路线和你的偏好生成结构化安排。完成后会自动展示并保存到历史行程。
+          </p>
+          <div class="mt-5 grid gap-2 text-left text-sm text-[#5e675b]">
+            <p class="rounded border border-[#d9d0bd] bg-[#f8f5ed] px-3 py-2">1. 收集路线和天气上下文</p>
+            <p class="rounded border border-[#d9d0bd] bg-[#f8f5ed] px-3 py-2">2. 生成每日时间表和路线建议</p>
+            <p class="rounded border border-[#d9d0bd] bg-[#f8f5ed] px-3 py-2">3. 保存到你的历史行程</p>
+          </div>
+        </div>
+      </div>
+
+      <div v-else-if="!activeTrip" class="grid min-h-[520px] place-items-center p-8 text-center text-[#5e675b]">
+        <div class="max-w-md">
+          <span class="mx-auto grid h-14 w-14 place-items-center rounded bg-[#e7dfcf] text-[#1d3b2a]">
+            <MapPinned :size="26" />
+          </span>
+          <h3 class="mt-5 text-xl font-semibold text-[#17201a]">从一份真实需求开始</h3>
+          <p class="mt-3 text-sm leading-7">
+            填写出发地、目的地和日期后，这里会展示按天拆分的行程、路线建议、天气参考和出行提醒。
+          </p>
+        </div>
       </div>
 
       <div v-else class="grid gap-6 p-6">
-        <p class="rounded border border-[#d9d0bd] bg-[#f8f5ed] p-4 text-sm leading-7 text-[#465144]">
-          {{ activeTrip.result.summary }}
-        </p>
+        <div class="grid gap-4 rounded border border-[#d9d0bd] bg-[#f8f5ed] p-5">
+          <p class="text-sm leading-7 text-[#465144]">{{ activeTrip.result.summary }}</p>
+          <div class="grid gap-3 text-sm md:grid-cols-3">
+            <div class="rounded border border-[#eadfca] bg-white p-3">
+              <p class="text-xs text-[#7a8175]">路线</p>
+              <p class="mt-1 font-semibold">{{ activeTrip.origin }} → {{ activeTrip.destination }}</p>
+            </div>
+            <div class="rounded border border-[#eadfca] bg-white p-3">
+              <p class="text-xs text-[#7a8175]">预算</p>
+              <p class="mt-1 font-semibold">{{ activeTrip.budget || '未填写' }}</p>
+            </div>
+            <div class="rounded border border-[#eadfca] bg-white p-3">
+              <p class="text-xs text-[#7a8175]">偏好</p>
+              <p class="mt-1 truncate font-semibold">
+                {{ activeTrip.preferences.length ? activeTrip.preferences.join('、') : '经典景点、在地体验' }}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <section v-if="activeTrip.result.weather.length" class="grid gap-3">
+          <h3 class="flex items-center gap-2 font-semibold">
+            <CloudSun :size="18" />
+            天气参考
+          </h3>
+          <div class="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+            <div
+              v-for="(weather, index) in activeTrip.result.weather.slice(0, activeTrip.days)"
+              :key="`${weather.date ?? index}-${weather.weather ?? ''}`"
+              class="rounded border border-[#d9d0bd] bg-[#fbfaf6] p-3 text-sm"
+            >
+              <p class="font-semibold">{{ weather.date ?? `第 ${index + 1} 天` }}</p>
+              <p class="mt-1 text-[#5e675b]">
+                {{ weather.weather ?? '天气待确认' }} · {{ weather.temperature ?? '温度待确认' }}
+              </p>
+            </div>
+          </div>
+        </section>
 
         <article v-for="day in activeTrip.result.days" :key="day.day" class="border border-[#d9d0bd] p-5">
           <h3 class="text-lg font-semibold">第 {{ day.day }} 天 · {{ day.theme }}</h3>
@@ -246,7 +356,7 @@ onMounted(() => {
             <div
               v-for="item in day.schedule"
               :key="`${day.day}-${item.time}-${item.title}`"
-              class="grid gap-1 rounded bg-[#fbfaf6] p-3"
+              class="grid gap-1 rounded border border-[#eadfca] bg-[#fbfaf6] p-3"
             >
               <p class="text-sm font-semibold text-[#c75532]">{{ item.time }} · {{ item.title }}</p>
               <p class="text-sm leading-7 text-[#465144]">{{ item.description }}</p>
@@ -254,23 +364,31 @@ onMounted(() => {
           </div>
         </article>
 
-        <section v-if="activeTrip.result.route_tips.length" class="grid gap-2">
-          <h3 class="font-semibold">路线建议</h3>
-          <ul class="grid gap-2 pl-5 text-sm leading-7 text-[#5e675b]">
-            <li v-for="tip in activeTrip.result.route_tips" :key="tip" class="list-disc">
-              {{ tip }}
-            </li>
-          </ul>
-        </section>
+        <div class="grid gap-4 lg:grid-cols-2">
+          <section v-if="activeTrip.result.route_tips.length" class="grid gap-2 rounded border border-[#d9d0bd] p-5">
+            <h3 class="flex items-center gap-2 font-semibold">
+              <MapPinned :size="18" />
+              路线建议
+            </h3>
+            <ul class="grid gap-2 pl-5 text-sm leading-7 text-[#5e675b]">
+              <li v-for="tip in activeTrip.result.route_tips" :key="tip" class="list-disc">
+                {{ tip }}
+              </li>
+            </ul>
+          </section>
 
-        <section v-if="activeTrip.result.tips.length" class="grid gap-2">
-          <h3 class="font-semibold">出行提醒</h3>
-          <ul class="grid gap-2 pl-5 text-sm leading-7 text-[#5e675b]">
-            <li v-for="tip in activeTrip.result.tips" :key="tip" class="list-disc">
-              {{ tip }}
-            </li>
-          </ul>
-        </section>
+          <section v-if="activeTrip.result.tips.length" class="grid gap-2 rounded border border-[#d9d0bd] p-5">
+            <h3 class="flex items-center gap-2 font-semibold">
+              <WalletCards :size="18" />
+              出行提醒
+            </h3>
+            <ul class="grid gap-2 pl-5 text-sm leading-7 text-[#5e675b]">
+              <li v-for="tip in activeTrip.result.tips" :key="tip" class="list-disc">
+                {{ tip }}
+              </li>
+            </ul>
+          </section>
+        </div>
       </div>
     </section>
 
