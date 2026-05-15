@@ -20,6 +20,20 @@ const canSubmit = computed(() => {
   return mode.value === 'login' ? Boolean(hasAccount && !isSubmitting.value) : Boolean(hasAccount && username.value.trim() && !isSubmitting.value)
 })
 
+function validateAuthForm() {
+  const normalizedEmail = email.value.trim()
+  if (mode.value === 'register' && username.value.trim().length < 2) {
+    return '用户名至少需要 2 个字符。'
+  }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
+    return '请输入正确的邮箱格式，例如 name@example.com。'
+  }
+  if (password.value.length < 8) {
+    return '密码至少需要 8 位。'
+  }
+  return ''
+}
+
 function switchMode(nextMode: 'login' | 'register') {
   mode.value = nextMode
   errorMessage.value = ''
@@ -28,6 +42,12 @@ function switchMode(nextMode: 'login' | 'register') {
 async function submitAuth() {
   if (!canSubmit.value) {
     errorMessage.value = mode.value === 'login' ? '请输入邮箱和密码。' : '请输入用户名、邮箱和密码。'
+    return
+  }
+
+  const validationError = validateAuthForm()
+  if (validationError) {
+    errorMessage.value = validationError
     return
   }
 
