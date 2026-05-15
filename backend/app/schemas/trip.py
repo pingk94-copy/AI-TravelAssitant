@@ -50,3 +50,11 @@ class TripResponse(BaseModel):
     created_at: datetime
 
     model_config = {"from_attributes": True}
+
+
+class TripFavoriteResponse(BaseModel):
+    id: int
+    favorite_type: str
+    target_id: int
+    trip: TripResponse
+    created_at: datetime

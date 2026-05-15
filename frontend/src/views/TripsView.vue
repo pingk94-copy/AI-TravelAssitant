@@ -7,6 +7,7 @@ import {
   MapPinned,
   RefreshCw,
   Sparkles,
+  Star,
   Trash2,
   WalletCards,
   X,
@@ -14,7 +15,16 @@ import {
 import { computed, onMounted, ref } from 'vue'
 
 import { getTask } from '../api/tasks'
-import { type TripResponse, deleteTrip, listTrips, planTripAsync } from '../api/trips'
+import {
+  type TripFavoriteResponse,
+  type TripResponse,
+  deleteTrip,
+  favoriteTrip,
+  listFavoriteTrips,
+  listTrips,
+  planTripAsync,
+  unfavoriteTrip,
+} from '../api/trips'
 import { useAppStore } from '../stores/app'
 
 const appStore = useAppStore()
@@ -27,10 +37,12 @@ const form = ref({
   preferences: '',
 })
 const trips = ref<TripResponse[]>([])
+const favoriteTrips = ref<TripFavoriteResponse[]>([])
 const activeTrip = ref<TripResponse | null>(null)
 const pendingDeleteTrip = ref<TripResponse | null>(null)
 const isPlanning = ref(false)
 const isDeleting = ref(false)
+const favoriteBusyId = ref<number | null>(null)
 const errorMessage = ref('')
 const taskStatus = ref('')
 const lastPayload = ref<{
@@ -45,10 +57,14 @@ const lastPayload = ref<{
 const canSubmit = computed(() => {
   return Boolean(form.value.origin.trim() && form.value.destination.trim() && form.value.start_date && !isPlanning.value)
 })
+const favoriteTripIds = computed(() => new Set(favoriteTrips.value.map((favorite) => favorite.target_id)))
+const activeTripFavorited = computed(() => Boolean(activeTrip.value && favoriteTripIds.value.has(activeTrip.value.id)))
 
 async function refreshTrips() {
   if (!appStore.token) return
-  trips.value = await listTrips(appStore.token)
+  const [tripItems, favoriteItems] = await Promise.all([listTrips(appStore.token), listFavoriteTrips(appStore.token)])
+  trips.value = tripItems
+  favoriteTrips.value = favoriteItems
   activeTrip.value = activeTrip.value ?? trips.value[0] ?? null
 }
 
@@ -108,6 +124,26 @@ async function submitPlan(useLastPayload = false) {
   }
 }
 
+async function toggleFavoriteTrip(trip: TripResponse) {
+  if (!appStore.token || favoriteBusyId.value === trip.id) return
+  favoriteBusyId.value = trip.id
+  errorMessage.value = ''
+
+  try {
+    if (favoriteTripIds.value.has(trip.id)) {
+      await unfavoriteTrip(appStore.token, trip.id)
+      favoriteTrips.value = favoriteTrips.value.filter((favorite) => favorite.target_id !== trip.id)
+    } else {
+      const favorite = await favoriteTrip(appStore.token, trip.id)
+      favoriteTrips.value = [favorite, ...favoriteTrips.value.filter((item) => item.target_id !== trip.id)]
+    }
+  } catch (error) {
+    errorMessage.value = error instanceof Error ? error.message : '收藏操作失败，请稍后重试。'
+  } finally {
+    favoriteBusyId.value = null
+  }
+}
+
 function retryLastPlan() {
   if (!lastPayload.value || isPlanning.value) return
   submitPlan(true)
@@ -131,6 +167,7 @@ async function confirmDeleteTrip() {
   try {
     await deleteTrip(appStore.token, trip.id)
     trips.value = trips.value.filter((item) => item.id !== trip.id)
+    favoriteTrips.value = favoriteTrips.value.filter((favorite) => favorite.target_id !== trip.id)
     if (activeTrip.value?.id === trip.id) {
       activeTrip.value = trips.value[0] ?? null
     }
@@ -270,15 +307,55 @@ onMounted(() => {
           </div>
         </div>
       </section>
+
+      <section class="border border-[#d9d0bd] bg-white p-5">
+        <div class="mb-4 flex items-center justify-between gap-3">
+          <h2 class="font-semibold">收藏行程</h2>
+          <span class="text-xs text-[#5e675b]">{{ favoriteTrips.length }} 条</span>
+        </div>
+        <div v-if="favoriteTrips.length === 0" class="rounded border border-dashed border-[#d9d0bd] p-4 text-sm leading-6 text-[#5e675b]">
+          还没有收藏。打开行程后点击星标，就能把常用方案留在这里。
+        </div>
+        <div v-else class="grid max-h-[260px] gap-2 overflow-y-auto pr-1">
+          <button
+            v-for="favorite in favoriteTrips"
+            :key="favorite.id"
+            class="grid gap-1 rounded border border-[#d9d0bd] bg-[#fbfaf6] px-3 py-3 text-left text-sm text-[#5e675b] hover:border-[#1d3b2a]"
+            type="button"
+            @click="selectTrip(favorite.trip)"
+          >
+            <span class="truncate font-semibold text-[#17201a]">{{ favorite.trip.title }}</span>
+            <span class="truncate text-xs">{{ favorite.trip.origin }} → {{ favorite.trip.destination }} · {{ favorite.trip.days }} 天</span>
+          </button>
+        </div>
+      </section>
     </aside>
 
     <section class="border border-[#d9d0bd] bg-white">
-      <div class="border-b border-[#d9d0bd] p-6">
-        <h2 class="text-xl font-semibold">{{ activeTrip?.title ?? '暂无行程' }}</h2>
-        <p v-if="activeTrip" class="mt-1 flex items-center gap-2 text-sm text-[#5e675b]">
-          <CalendarDays :size="16" />
-          {{ activeTrip.start_date }} · {{ activeTrip.days }} 天 · {{ statusLabel(activeTrip.status) }}
-        </p>
+      <div class="flex flex-wrap items-start justify-between gap-4 border-b border-[#d9d0bd] p-6">
+        <div>
+          <h2 class="text-xl font-semibold">{{ activeTrip?.title ?? '暂无行程' }}</h2>
+          <p v-if="activeTrip" class="mt-1 flex items-center gap-2 text-sm text-[#5e675b]">
+            <CalendarDays :size="16" />
+            {{ activeTrip.start_date }} · {{ activeTrip.days }} 天 · {{ statusLabel(activeTrip.status) }}
+          </p>
+        </div>
+        <button
+          v-if="activeTrip"
+          class="inline-flex h-10 items-center justify-center gap-2 rounded border px-4 text-sm font-semibold"
+          :class="
+            activeTripFavorited
+              ? 'border-[#c75532] bg-[#fff4ef] text-[#b4442a]'
+              : 'border-[#cfc4ae] bg-white text-[#465144] hover:bg-[#f8f5ed]'
+          "
+          :disabled="favoriteBusyId === activeTrip.id"
+          type="button"
+          @click="toggleFavoriteTrip(activeTrip)"
+        >
+          <LoaderCircle v-if="favoriteBusyId === activeTrip.id" class="animate-spin" :size="16" />
+          <Star v-else :size="16" />
+          {{ activeTripFavorited ? '已收藏' : '收藏行程' }}
+        </button>
       </div>
 
       <div v-if="isPlanning" class="grid min-h-[460px] place-items-center p-6 text-center md:min-h-[520px] md:p-8">

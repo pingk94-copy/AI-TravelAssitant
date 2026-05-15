@@ -39,6 +39,14 @@ export type TripResponse = {
   created_at: string
 }
 
+export type TripFavoriteResponse = {
+  id: number
+  favorite_type: 'trip'
+  target_id: number
+  trip: TripResponse
+  created_at: string
+}
+
 export async function planTrip(token: string, payload: TripPlanRequest) {
   return apiRequest<TripResponse>('/api/trips/plan', {
     method: 'POST',
@@ -63,6 +71,26 @@ export async function listTrips(token: string) {
 
 export async function deleteTrip(token: string, tripId: number) {
   return apiRequest<void>(`/api/trips/${tripId}`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${token}` },
+  })
+}
+
+export async function listFavoriteTrips(token: string) {
+  return apiRequest<TripFavoriteResponse[]>('/api/trips/favorites', {
+    headers: { Authorization: `Bearer ${token}` },
+  })
+}
+
+export async function favoriteTrip(token: string, tripId: number) {
+  return apiRequest<TripFavoriteResponse>(`/api/trips/${tripId}/favorite`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}` },
+  })
+}
+
+export async function unfavoriteTrip(token: string, tripId: number) {
+  return apiRequest<void>(`/api/trips/${tripId}/favorite`, {
     method: 'DELETE',
     headers: { Authorization: `Bearer ${token}` },
   })

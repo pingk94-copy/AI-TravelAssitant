@@ -4,9 +4,10 @@ from sqlalchemy.orm import Session
 
 from app.agents.planner_agent import PlannerAgent
 from app.agents.search_agents import POISearchAgent, RouteSearchAgent, WeatherSearchAgent
+from app.models.favorite import Favorite
 from app.models.trip import Trip
 from app.models.user import User
-from app.schemas.trip import ItineraryResult, TripPlanRequest, TripResponse
+from app.schemas.trip import ItineraryResult, TripFavoriteResponse, TripPlanRequest, TripResponse
 from app.services.llm_service import generate_trip_with_llm
 
 
@@ -46,6 +47,47 @@ def delete_trip(db: Session, trip: Trip) -> None:
     db.commit()
 
 
+def favorite_trip(db: Session, user: User, trip: Trip) -> tuple[Favorite, bool]:
+    favorite = db.scalar(
+        select(Favorite).where(
+            Favorite.user_id == user.id,
+            Favorite.favorite_type == "trip",
+            Favorite.target_id == trip.id,
+        )
+    )
+    if favorite is not None:
+        return favorite, False
+
+    favorite = Favorite(user_id=user.id, favorite_type="trip", target_id=trip.id)
+    db.add(favorite)
+    db.commit()
+    db.refresh(favorite)
+    return favorite, True
+
+
+def unfavorite_trip(db: Session, user: User, trip: Trip) -> None:
+    favorite = db.scalar(
+        select(Favorite).where(
+            Favorite.user_id == user.id,
+            Favorite.favorite_type == "trip",
+            Favorite.target_id == trip.id,
+        )
+    )
+    if favorite is not None:
+        db.delete(favorite)
+        db.commit()
+
+
+def list_favorite_trips(db: Session, user: User) -> list[tuple[Favorite, Trip]]:
+    statement = (
+        select(Favorite, Trip)
+        .join(Trip, Favorite.target_id == Trip.id)
+        .where(Favorite.user_id == user.id, Favorite.favorite_type == "trip", Trip.user_id == user.id)
+        .order_by(Favorite.created_at.desc(), Favorite.id.desc())
+    )
+    return list(db.execute(statement).all())
+
+
 def to_trip_response(trip: Trip) -> TripResponse:
     return TripResponse(
         id=trip.id,
@@ -59,6 +101,16 @@ def to_trip_response(trip: Trip) -> TripResponse:
         status=trip.status,
         result=ItineraryResult.model_validate(trip.result_json),
         created_at=trip.created_at,
+    )
+
+
+def to_trip_favorite_response(favorite: Favorite, trip: Trip) -> TripFavoriteResponse:
+    return TripFavoriteResponse(
+        id=favorite.id,
+        favorite_type=favorite.favorite_type,
+        target_id=favorite.target_id,
+        trip=to_trip_response(trip),
+        created_at=favorite.created_at,
     )
 
 
