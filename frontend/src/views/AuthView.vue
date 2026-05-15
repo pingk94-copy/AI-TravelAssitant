@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { LogIn, UserPlus } from 'lucide-vue-next'
+import { CheckCircle2, KeyRound, LogIn, ShieldCheck, UserPlus } from 'lucide-vue-next'
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 
@@ -57,21 +57,51 @@ async function submitAuth() {
 </script>
 
 <template>
-  <main class="mx-auto grid min-h-[calc(100vh-73px)] max-w-7xl items-center px-5 py-10 lg:grid-cols-[0.9fr_1.1fr]">
-    <section class="hidden pr-10 lg:block">
-      <p class="mb-4 text-sm font-semibold tracking-[0.18em] text-[#c75532]">账号中心</p>
-      <h1 class="text-5xl font-semibold leading-tight">
-        让每一次对话、工具查询和行程规划都沉淀到你的专属工作区。
-      </h1>
-      <p class="mt-5 max-w-xl text-sm leading-7 text-[#5e675b]">
-        登录后，聊天记录、行程规划和后续收藏能力都会与当前用户绑定，方便继续追踪和复盘。
-      </p>
+  <main class="mx-auto grid min-h-[calc(100vh-73px)] max-w-[112rem] items-center gap-6 px-4 py-6 md:px-6 md:py-8 lg:grid-cols-[1fr_480px]">
+    <section class="app-surface hidden min-h-[560px] flex-col justify-between p-10 lg:flex">
+      <div>
+        <p class="inline-flex items-center gap-2 rounded-full border border-[#d7e3d3] bg-[#eef5eb] px-3 py-1 text-sm font-bold text-[#1d3b2a]">
+          <ShieldCheck :size="16" />
+          账号中心
+        </p>
+        <h1 class="mt-6 max-w-4xl text-5xl font-extrabold leading-tight">
+          把对话、行程和收藏，都沉淀到你的专属旅行工作区。
+        </h1>
+        <p class="mt-5 max-w-2xl text-base leading-8 text-[#5e675b]">
+          登录后可以保存每一次 AI 对话、结构化行程和收藏方案。下次继续规划时，不用从零开始。
+        </p>
+      </div>
+
+      <div class="grid gap-3">
+        <div class="app-card grid grid-cols-[auto_1fr] gap-3 p-4">
+          <span class="app-icon"><CheckCircle2 :size="20" /></span>
+          <div>
+            <p class="font-bold">历史记录自动归档</p>
+            <p class="mt-1 text-sm leading-6 text-[#5e675b]">对话和行程都会绑定到当前账号，方便复盘和继续修改。</p>
+          </div>
+        </div>
+        <div class="app-card grid grid-cols-[auto_1fr] gap-3 p-4">
+          <span class="app-icon app-icon-warm"><KeyRound :size="20" /></span>
+          <div>
+            <p class="font-bold">本地开发安全配置</p>
+            <p class="mt-1 text-sm leading-6 text-[#5e675b]">API Key 留在后端环境文件中，不会暴露到前端页面。</p>
+          </div>
+        </div>
+      </div>
     </section>
 
-    <section class="mx-auto w-full max-w-md border border-[#d9d0bd] bg-[#f8f5ed] p-6">
-      <div class="mb-6 flex gap-2 rounded bg-[#e7dfcf] p-1">
+    <section class="app-surface mx-auto w-full max-w-md p-6 md:p-7">
+      <div class="mb-6">
+        <p class="text-sm font-bold text-[#c75532]">欢迎回来</p>
+        <h2 class="mt-2 text-2xl font-extrabold">{{ title }}</h2>
+        <p class="mt-2 text-sm leading-6 text-[#5e675b]">
+          {{ mode === 'login' ? '登录后继续管理你的旅行计划。' : '创建账号后即可保存行程和对话。' }}
+        </p>
+      </div>
+
+      <div class="mb-6 flex gap-2 rounded-lg bg-[#e7dfcf] p-1">
         <button
-          class="flex-1 rounded px-4 py-2 text-sm font-semibold"
+          class="flex-1 rounded-md px-4 py-2 text-sm font-bold"
           :class="mode === 'login' ? 'bg-white text-[#17201a]' : 'text-[#5e675b]'"
           type="button"
           @click="switchMode('login')"
@@ -79,7 +109,7 @@ async function submitAuth() {
           登录
         </button>
         <button
-          class="flex-1 rounded px-4 py-2 text-sm font-semibold"
+          class="flex-1 rounded-md px-4 py-2 text-sm font-bold"
           :class="mode === 'register' ? 'bg-white text-[#17201a]' : 'text-[#5e675b]'"
           type="button"
           @click="switchMode('register')"
@@ -88,30 +118,28 @@ async function submitAuth() {
         </button>
       </div>
 
-      <h2 class="text-2xl font-semibold">{{ title }}</h2>
-
       <form class="mt-6 grid gap-4" @submit.prevent="submitAuth">
         <label v-if="mode === 'register'" class="grid gap-2 text-sm font-medium">
           用户名
-          <input v-model="username" autocomplete="username" class="auth-input" placeholder="请输入用户名" type="text" />
+          <input v-model="username" autocomplete="username" class="app-input" placeholder="请输入用户名" type="text" />
         </label>
         <label class="grid gap-2 text-sm font-medium">
           邮箱
-          <input v-model="email" autocomplete="email" class="auth-input" placeholder="请输入邮箱" type="email" />
+          <input v-model="email" autocomplete="email" class="app-input" placeholder="请输入邮箱" type="email" />
         </label>
         <label class="grid gap-2 text-sm font-medium">
           密码
           <input
             v-model="password"
             :autocomplete="mode === 'login' ? 'current-password' : 'new-password'"
-            class="auth-input"
+            class="app-input"
             placeholder="请输入密码"
             type="password"
           />
         </label>
 
         <button
-          class="mt-2 inline-flex h-12 items-center justify-center gap-2 rounded bg-[#1d3b2a] px-5 font-semibold text-white disabled:opacity-60"
+          class="app-button-primary mt-2 h-12 px-5 disabled:opacity-60"
           :disabled="!canSubmit"
           type="submit"
         >
@@ -121,22 +149,9 @@ async function submitAuth() {
         </button>
       </form>
 
-      <p v-if="errorMessage" class="mt-4 text-sm text-[#b4442a]">{{ errorMessage }}</p>
+      <div v-if="errorMessage" class="app-alert mt-4 p-3 text-sm leading-6">
+        {{ errorMessage }}
+      </div>
     </section>
   </main>
 </template>
-
-<style scoped>
-.auth-input {
-  height: 2.75rem;
-  border: 1px solid #d9d0bd;
-  border-radius: 6px;
-  background: #fff;
-  padding: 0 0.75rem;
-  outline: none;
-}
-
-.auth-input:focus {
-  border-color: #1d3b2a;
-}
-</style>

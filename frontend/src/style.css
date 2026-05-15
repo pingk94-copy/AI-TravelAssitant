@@ -37,3 +37,124 @@ button {
 #app {
   min-height: 100vh;
 }
+
+.app-surface {
+  border: 1px solid #d9d0bd;
+  background: #fbfaf6;
+  box-shadow: 0 18px 48px rgb(23 32 26 / 0.07);
+}
+
+.app-panel {
+  border: 1px solid #d9d0bd;
+  background: #f8f5ed;
+}
+
+.app-card {
+  border: 1px solid #eadfca;
+  background: #fff;
+  box-shadow: 0 10px 26px rgb(23 32 26 / 0.04);
+}
+
+.app-icon {
+  display: grid;
+  width: 2.75rem;
+  height: 2.75rem;
+  place-items: center;
+  border-radius: 8px;
+  background: #eef5eb;
+  color: #1d3b2a;
+}
+
+.app-icon-warm {
+  background: #fff4ef;
+  color: #c75532;
+}
+
+.app-button-primary {
+  display: inline-flex;
+  min-height: 2.75rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border: 0;
+  border-radius: 8px;
+  background: #c75532;
+  color: #fff;
+  font-weight: 800;
+  transition:
+    transform 160ms ease,
+    box-shadow 160ms ease,
+    opacity 160ms ease;
+}
+
+.app-button-primary:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 24px rgb(199 85 50 / 0.2);
+}
+
+.app-button-secondary {
+  display: inline-flex;
+  min-height: 2.75rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border: 1px solid #cfc4ae;
+  border-radius: 8px;
+  background: #fff;
+  color: #1d3b2a;
+  font-weight: 800;
+}
+
+.app-button-quiet {
+  display: inline-flex;
+  min-height: 2.5rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: #465144;
+  font-weight: 700;
+}
+
+.app-button-danger {
+  display: inline-flex;
+  min-height: 2.5rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  border: 0;
+  border-radius: 8px;
+  background: #b4442a;
+  color: #fff;
+  font-weight: 800;
+}
+
+.app-input {
+  height: 2.85rem;
+  border: 1px solid #d9d0bd;
+  border-radius: 8px;
+  background: #fff;
+  padding: 0 0.85rem;
+  outline: none;
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.app-input:focus {
+  border-color: #1d3b2a;
+  box-shadow: 0 0 0 3px rgb(29 59 42 / 0.12);
+}
+
+.app-alert {
+  border: 1px solid #edc7b8;
+  border-radius: 8px;
+  background: #fff4ef;
+  color: #8b3a23;
+}
+
+.app-muted {
+  color: #5e675b;
+}

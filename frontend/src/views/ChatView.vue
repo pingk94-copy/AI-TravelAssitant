@@ -223,19 +223,20 @@ onMounted(() => {
 
 <template>
   <main class="mx-auto grid max-w-[112rem] gap-5 px-4 py-5 md:h-[calc(100vh-73px)] md:px-6 md:py-6 lg:grid-cols-[320px_1fr]">
-    <aside class="flex min-h-0 flex-col border border-[#d9d0bd] bg-[#f8f5ed] p-5">
+    <aside class="app-panel flex min-h-0 flex-col p-5">
       <div class="shrink-0">
-        <h1 class="text-lg font-semibold">旅行会话</h1>
+        <h1 class="text-lg font-extrabold">旅行会话</h1>
+        <p class="mt-1 text-sm leading-6 text-[#5e675b]">把灵感、路线和备选方案放在同一个工作区。</p>
 
         <div class="mt-5 grid gap-3">
           <input
             v-model="sessionTitle"
-            class="h-11 rounded border border-[#d9d0bd] bg-white px-3 text-sm outline-none focus:border-[#1d3b2a]"
+            class="app-input text-sm"
             placeholder="会话标题，例如：西安三日游"
             type="text"
           />
           <button
-            class="inline-flex h-11 items-center justify-center gap-2 rounded bg-[#1d3b2a] px-4 text-sm font-semibold text-white"
+            class="app-button-secondary h-11 px-4 text-sm"
             type="button"
             @click="startSession"
           >
@@ -249,11 +250,11 @@ onMounted(() => {
         <div
           v-for="session in sessions"
           :key="session.id"
-          class="group grid grid-cols-[1fr_auto] items-center gap-2 rounded border px-3 py-3 text-sm"
+          class="group grid grid-cols-[1fr_auto] items-center gap-2 rounded-lg border px-3 py-3 text-sm transition"
           :class="
             activeSession?.id === session.id
-              ? 'border-[#1d3b2a] bg-[#e7dfcf] text-[#17201a]'
-              : 'border-[#d9d0bd] bg-white text-[#5e675b]'
+              ? 'border-[#1d3b2a] bg-[#e7dfcf] text-[#17201a] shadow-sm'
+              : 'border-[#d9d0bd] bg-white text-[#5e675b] hover:border-[#b9ad96] hover:bg-[#fbfaf6]'
           "
         >
           <button class="truncate text-left" type="button" @click="selectSession(session)">
@@ -271,11 +272,11 @@ onMounted(() => {
       </div>
     </aside>
 
-    <section class="flex min-h-[620px] flex-col border border-[#d9d0bd] bg-white md:min-h-0">
+    <section class="app-surface flex min-h-[620px] flex-col md:min-h-0">
       <div class="shrink-0 border-b border-[#d9d0bd] p-5">
-        <h2 class="text-xl font-semibold">{{ activeSession?.title ?? 'AI 旅行对话' }}</h2>
+        <h2 class="text-xl font-extrabold">{{ activeSession?.title ?? 'AI 旅行对话' }}</h2>
         <p class="mt-1 text-sm text-[#5e675b]">回复会按标题、段落和清单拆开显示，方便阅读和复查。</p>
-        <div v-if="shouldShowLlmStatus" class="mt-4 rounded border px-4 py-3 text-sm" :class="llmStatusClass">
+        <div v-if="shouldShowLlmStatus" class="mt-4 rounded-lg border px-4 py-3 text-sm" :class="llmStatusClass">
           <div class="flex flex-wrap items-center justify-between gap-2">
             <span class="font-semibold">{{ llmStatusText }}</span>
             <button class="text-xs font-semibold underline-offset-4 hover:underline" type="button" @click="refreshLlmHealth">
@@ -295,19 +296,23 @@ onMounted(() => {
       </div>
 
       <div ref="messageList" class="min-h-0 flex-1 space-y-5 overflow-y-auto p-5">
-        <div v-if="!activeSession" class="flex h-full items-center justify-center text-center text-[#5e675b]">
-          先新建一个会话，就可以开始和 AI 讨论旅行计划。
+        <div v-if="!activeSession" class="flex h-full items-center justify-center p-6 text-center text-[#5e675b]">
+          <div class="max-w-sm">
+            <span class="app-icon mx-auto"><MessageSquarePlus :size="22" /></span>
+            <h3 class="mt-4 text-lg font-extrabold text-[#17201a]">先创建一个旅行会话</h3>
+            <p class="mt-2 text-sm leading-7">你可以用自然语言讨论路线、预算、住宿区域和每日安排。</p>
+          </div>
         </div>
 
         <article
           v-for="message in messages"
           :key="message.id"
           :data-message-id="message.id"
-          class="rounded px-4 py-3 text-sm leading-7"
+          class="rounded-lg px-4 py-3 text-sm leading-7"
           :class="
             message.role === 'user'
-              ? 'ml-auto max-w-[92%] bg-[#1d3b2a] text-white md:max-w-[78%]'
-              : 'mr-auto max-w-[860px] border border-[#d9d0bd] bg-[#f8f5ed] text-[#17201a]'
+              ? 'ml-auto max-w-[92%] bg-[#1d3b2a] text-white shadow-sm md:max-w-[78%]'
+              : 'mr-auto max-w-[900px] border border-[#d9d0bd] bg-[#f8f5ed] text-[#17201a] shadow-sm'
           "
         >
           <template v-if="message.role === 'assistant'">
@@ -333,20 +338,20 @@ onMounted(() => {
         </article>
       </div>
 
-      <p v-if="errorMessage" class="shrink-0 border-t border-[#d9d0bd] px-5 py-3 text-sm text-[#b4442a]">
-        {{ errorMessage }}
-      </p>
+      <div v-if="errorMessage" class="shrink-0 border-t border-[#d9d0bd] px-5 py-3">
+        <p class="app-alert px-3 py-2 text-sm">{{ errorMessage }}</p>
+      </div>
 
       <form class="grid shrink-0 gap-3 border-t border-[#d9d0bd] p-5 md:grid-cols-[1fr_auto]" @submit.prevent="sendMessage">
         <input
           v-model="draft"
           :disabled="!activeSession || isStreaming"
-          class="h-12 rounded border border-[#d9d0bd] bg-white px-4 outline-none focus:border-[#1d3b2a] disabled:bg-[#eee8dc]"
+          class="app-input h-12 disabled:bg-[#eee8dc]"
           placeholder="输入你的旅行想法，例如：杭州两日慢旅行怎么安排？"
           type="text"
         />
         <button
-          class="inline-flex h-12 items-center justify-center gap-2 rounded bg-[#c75532] px-5 font-semibold text-white disabled:opacity-60"
+          class="app-button-primary h-12 px-5 disabled:opacity-60"
           :disabled="!canSend"
           type="submit"
         >
@@ -363,10 +368,10 @@ onMounted(() => {
         class="fixed inset-0 z-50 grid place-items-center bg-[#17201a]/45 px-4 backdrop-blur-sm"
         @click.self="cancelDeleteSession"
       >
-        <section class="w-full max-w-md border border-[#d9d0bd] bg-white shadow-2xl">
+        <section class="app-surface w-full max-w-md shadow-2xl">
           <div class="flex items-start justify-between gap-4 border-b border-[#eadfca] p-5">
             <div class="flex gap-3">
-              <span class="grid h-10 w-10 shrink-0 place-items-center rounded bg-[#f7dfd6] text-[#b4442a]">
+              <span class="app-icon app-icon-warm shrink-0">
                 <AlertTriangle :size="20" />
               </span>
               <div>
@@ -377,7 +382,7 @@ onMounted(() => {
               </div>
             </div>
             <button
-              class="grid h-8 w-8 place-items-center rounded text-[#5e675b] hover:bg-[#f4f0e7]"
+              class="grid h-8 w-8 place-items-center rounded-lg text-[#5e675b] hover:bg-[#f4f0e7]"
               type="button"
               @click="cancelDeleteSession"
             >
@@ -387,14 +392,14 @@ onMounted(() => {
 
           <div class="grid gap-2 p-5">
             <p class="text-sm text-[#5e675b]">即将删除</p>
-            <p class="rounded border border-[#eadfca] bg-[#f8f5ed] px-3 py-3 font-semibold">
+            <p class="rounded-lg border border-[#eadfca] bg-[#f8f5ed] px-3 py-3 font-semibold">
               {{ pendingDeleteSession.title }}
             </p>
           </div>
 
           <div class="flex justify-end gap-3 border-t border-[#eadfca] p-5">
             <button
-              class="h-10 rounded border border-[#cfc4ae] bg-white px-4 text-sm font-semibold text-[#465144] hover:bg-[#f8f5ed]"
+              class="app-button-secondary h-10 px-4 text-sm"
               :disabled="isDeleting"
               type="button"
               @click="cancelDeleteSession"
@@ -402,7 +407,7 @@ onMounted(() => {
               取消
             </button>
             <button
-              class="inline-flex h-10 items-center justify-center gap-2 rounded bg-[#b4442a] px-4 text-sm font-semibold text-white disabled:opacity-60"
+              class="app-button-danger h-10 px-4 text-sm disabled:opacity-60"
               :disabled="isDeleting"
               type="button"
               @click="confirmDeleteSession"

@@ -3,6 +3,8 @@ import {
   AlertTriangle,
   CalendarDays,
   CloudSun,
+  CheckCircle2,
+  Clock3,
   LoaderCircle,
   MapPinned,
   RefreshCw,
@@ -59,6 +61,11 @@ const canSubmit = computed(() => {
 })
 const favoriteTripIds = computed(() => new Set(favoriteTrips.value.map((favorite) => favorite.target_id)))
 const activeTripFavorited = computed(() => Boolean(activeTrip.value && favoriteTripIds.value.has(activeTrip.value.id)))
+const planningSteps = [
+  '分析出发地、目的地和旅行偏好',
+  '查询天气、景点和路线参考',
+  '整理每日时间轴与出行提醒',
+]
 
 async function refreshTrips() {
   if (!appStore.token) return
@@ -104,7 +111,7 @@ async function submitPlan(useLastPayload = false) {
 
   isPlanning.value = true
   errorMessage.value = ''
-  taskStatus.value = '正在整理城市、天气、路线和偏好信息...'
+  taskStatus.value = '正在分析你的旅行需求，准备生成结构化行程...'
 
   try {
     const task = await planTripAsync(appStore.token, payload)
@@ -202,13 +209,13 @@ onMounted(() => {
 <template>
   <main class="mx-auto grid max-w-[112rem] gap-5 px-4 py-5 md:px-6 md:py-8 lg:h-[calc(100vh-73px)] lg:grid-cols-[340px_minmax(0,1fr)] lg:py-6 xl:grid-cols-[360px_minmax(0,1fr)] 2xl:grid-cols-[380px_minmax(0,1fr)]">
     <aside class="grid min-h-0 gap-5 overflow-y-auto pr-0 lg:pr-1">
-      <section class="border border-[#d9d0bd] bg-[#f8f5ed] p-5 md:p-6">
+      <section class="app-panel p-5 md:p-6">
         <div class="mb-6 flex items-center gap-3">
-          <span class="grid h-10 w-10 place-items-center rounded bg-[#1d3b2a] text-white">
+          <span class="app-icon">
             <MapPinned :size="20" />
           </span>
           <div>
-            <h1 class="text-2xl font-semibold">行程规划</h1>
+            <h1 class="text-2xl font-extrabold">行程规划</h1>
             <p class="text-sm text-[#5e675b]">调用大模型生成结构化行程，失败时使用本地兜底。</p>
           </div>
         </div>
@@ -216,31 +223,31 @@ onMounted(() => {
         <form class="grid gap-4" @submit.prevent="submitPlan">
           <label class="grid gap-2 text-sm font-medium">
             出发地
-            <input v-model="form.origin" class="form-input" placeholder="例如：上海" type="text" />
+            <input v-model="form.origin" class="app-input" placeholder="例如：上海" type="text" />
           </label>
           <label class="grid gap-2 text-sm font-medium">
             目的地
-            <input v-model="form.destination" class="form-input" placeholder="例如：西安" type="text" />
+            <input v-model="form.destination" class="app-input" placeholder="例如：西安" type="text" />
           </label>
           <label class="grid gap-2 text-sm font-medium">
             出发日期
-            <input v-model="form.start_date" class="form-input" type="date" />
+            <input v-model="form.start_date" class="app-input" type="date" />
           </label>
           <label class="grid gap-2 text-sm font-medium">
             游玩天数
-            <input v-model="form.days" class="form-input" max="5" min="1" type="number" />
+            <input v-model="form.days" class="app-input" max="5" min="1" type="number" />
           </label>
           <label class="grid gap-2 text-sm font-medium">
             预算
-            <input v-model="form.budget" class="form-input" placeholder="例如：3000 元/人" type="text" />
+            <input v-model="form.budget" class="app-input" placeholder="例如：3000 元/人" type="text" />
           </label>
           <label class="grid gap-2 text-sm font-medium">
             偏好
-            <input v-model="form.preferences" class="form-input" placeholder="例如：历史、美食、慢节奏" type="text" />
+            <input v-model="form.preferences" class="app-input" placeholder="例如：历史、美食、慢节奏" type="text" />
           </label>
 
           <button
-            class="mt-2 inline-flex h-12 items-center justify-center gap-2 rounded bg-[#c75532] px-5 font-semibold text-white disabled:opacity-60"
+            class="app-button-primary mt-2 h-12 px-5 disabled:opacity-60"
             :disabled="!canSubmit"
             type="submit"
           >
@@ -250,12 +257,12 @@ onMounted(() => {
           </button>
         </form>
 
-        <div v-if="errorMessage" class="mt-4 rounded border border-[#edc7b8] bg-[#fff4ef] p-3 text-sm leading-6 text-[#9d3d20]">
+        <div v-if="errorMessage" class="app-alert mt-4 p-3 text-sm leading-6">
           <p class="font-semibold">生成失败</p>
           <p>{{ errorMessage }}</p>
           <button
             v-if="lastPayload"
-            class="mt-3 inline-flex h-9 items-center justify-center gap-2 rounded border border-[#d9a08a] bg-white px-3 text-xs font-semibold"
+            class="app-button-secondary mt-3 h-9 px-3 text-xs"
             type="button"
             @click="retryLastPlan"
           >
@@ -263,7 +270,7 @@ onMounted(() => {
             重新生成
           </button>
         </div>
-        <div v-if="taskStatus" class="mt-4 rounded border border-[#d9d0bd] bg-white p-3 text-sm leading-6 text-[#5e675b]">
+        <div v-if="taskStatus" class="mt-4 rounded-lg border border-[#d9d0bd] bg-white p-3 text-sm leading-6 text-[#5e675b]">
           <div class="flex items-center gap-2">
             <LoaderCircle v-if="isPlanning" class="animate-spin text-[#c75532]" :size="16" />
             <Sparkles v-else class="text-[#c75532]" :size="16" />
@@ -272,19 +279,19 @@ onMounted(() => {
         </div>
       </section>
 
-      <section class="border border-[#d9d0bd] bg-white p-5">
+      <section class="app-card p-5">
         <div class="mb-4 flex items-center justify-between gap-3">
           <h2 class="font-semibold">历史行程</h2>
           <span class="text-xs text-[#5e675b]">{{ trips.length }} 条</span>
         </div>
-        <div v-if="trips.length === 0" class="rounded border border-dashed border-[#d9d0bd] p-4 text-sm leading-6 text-[#5e675b]">
+        <div v-if="trips.length === 0" class="rounded-lg border border-dashed border-[#d9d0bd] p-4 text-sm leading-6 text-[#5e675b]">
           还没有历史行程。生成后会自动保存到这里。
         </div>
         <div v-else class="grid max-h-[420px] gap-2 overflow-y-auto pr-1">
           <div
             v-for="trip in trips"
             :key="trip.id"
-            class="grid grid-cols-[1fr_auto] items-start gap-2 rounded border px-3 py-3 text-sm transition"
+            class="grid grid-cols-[1fr_auto] items-start gap-2 rounded-lg border px-3 py-3 text-sm transition"
             :class="
               activeTrip?.id === trip.id
                 ? 'border-[#1d3b2a] bg-[#e7dfcf] text-[#17201a]'
@@ -308,19 +315,19 @@ onMounted(() => {
         </div>
       </section>
 
-      <section class="border border-[#d9d0bd] bg-white p-5">
+      <section class="app-card p-5">
         <div class="mb-4 flex items-center justify-between gap-3">
           <h2 class="font-semibold">收藏行程</h2>
           <span class="text-xs text-[#5e675b]">{{ favoriteTrips.length }} 条</span>
         </div>
-        <div v-if="favoriteTrips.length === 0" class="rounded border border-dashed border-[#d9d0bd] p-4 text-sm leading-6 text-[#5e675b]">
+        <div v-if="favoriteTrips.length === 0" class="rounded-lg border border-dashed border-[#d9d0bd] p-4 text-sm leading-6 text-[#5e675b]">
           还没有收藏。打开行程后点击星标，就能把常用方案留在这里。
         </div>
         <div v-else class="grid max-h-[260px] gap-2 overflow-y-auto pr-1">
           <button
             v-for="favorite in favoriteTrips"
             :key="favorite.id"
-            class="grid gap-1 rounded border border-[#d9d0bd] bg-[#fbfaf6] px-3 py-3 text-left text-sm text-[#5e675b] hover:border-[#1d3b2a]"
+            class="grid gap-1 rounded-lg border border-[#d9d0bd] bg-[#fbfaf6] px-3 py-3 text-left text-sm text-[#5e675b] hover:border-[#1d3b2a]"
             type="button"
             @click="selectTrip(favorite.trip)"
           >
@@ -331,10 +338,10 @@ onMounted(() => {
       </section>
     </aside>
 
-    <section class="flex min-h-[620px] flex-col border border-[#d9d0bd] bg-white lg:min-h-0">
+    <section class="app-surface flex min-h-[620px] flex-col lg:min-h-0">
       <div class="shrink-0 flex flex-wrap items-start justify-between gap-4 border-b border-[#d9d0bd] p-6">
         <div>
-          <h2 class="text-xl font-semibold">{{ activeTrip?.title ?? '暂无行程' }}</h2>
+          <h2 class="text-xl font-extrabold">{{ activeTrip?.title ?? '暂无行程' }}</h2>
           <p v-if="activeTrip" class="mt-1 flex items-center gap-2 text-sm text-[#5e675b]">
             <CalendarDays :size="16" />
             {{ activeTrip.start_date }} · {{ activeTrip.days }} 天 · {{ statusLabel(activeTrip.status) }}
@@ -342,7 +349,7 @@ onMounted(() => {
         </div>
         <button
           v-if="activeTrip"
-          class="inline-flex h-10 items-center justify-center gap-2 rounded border px-4 text-sm font-semibold"
+          class="inline-flex h-10 items-center justify-center gap-2 rounded-lg border px-4 text-sm font-bold"
           :class="
             activeTripFavorited
               ? 'border-[#c75532] bg-[#fff4ef] text-[#b4442a]'
@@ -359,28 +366,33 @@ onMounted(() => {
       </div>
 
       <div v-if="isPlanning" class="grid min-h-[460px] flex-1 place-items-center overflow-y-auto p-6 text-center md:min-h-[520px] md:p-8 lg:min-h-0">
-        <div class="max-w-md">
-          <span class="mx-auto grid h-14 w-14 place-items-center rounded bg-[#f7dfd6] text-[#c75532]">
+        <div class="max-w-lg">
+          <span class="app-icon app-icon-warm mx-auto h-14 w-14">
             <LoaderCircle class="animate-spin" :size="28" />
           </span>
-          <h3 class="mt-5 text-xl font-semibold">正在生成行程</h3>
+          <h3 class="mt-5 text-xl font-extrabold">正在生成行程</h3>
           <p class="mt-3 text-sm leading-7 text-[#5e675b]">
             正在结合出发城市、目的地、天气、路线和你的偏好生成结构化安排。完成后会自动展示并保存到历史行程。
           </p>
-          <div class="mt-5 grid gap-2 text-left text-sm text-[#5e675b]">
-            <p class="rounded border border-[#d9d0bd] bg-[#f8f5ed] px-3 py-2">1. 收集路线和天气上下文</p>
-            <p class="rounded border border-[#d9d0bd] bg-[#f8f5ed] px-3 py-2">2. 生成每日时间表和路线建议</p>
-            <p class="rounded border border-[#d9d0bd] bg-[#f8f5ed] px-3 py-2">3. 保存到你的历史行程</p>
+          <div class="mt-6 grid gap-3 text-left text-sm text-[#5e675b]">
+            <div
+              v-for="(step, index) in planningSteps"
+              :key="step"
+              class="grid grid-cols-[auto_1fr] items-center gap-3 rounded-lg border border-[#d9d0bd] bg-[#f8f5ed] px-4 py-3"
+            >
+              <span class="grid h-7 w-7 place-items-center rounded-full bg-white font-bold text-[#c75532]">{{ index + 1 }}</span>
+              <span>{{ step }}</span>
+            </div>
           </div>
         </div>
       </div>
 
       <div v-else-if="!activeTrip" class="grid min-h-[460px] flex-1 place-items-center overflow-y-auto p-6 text-center text-[#5e675b] md:min-h-[520px] md:p-8 lg:min-h-0">
         <div class="max-w-md">
-          <span class="mx-auto grid h-14 w-14 place-items-center rounded bg-[#e7dfcf] text-[#1d3b2a]">
+          <span class="app-icon mx-auto h-14 w-14">
             <MapPinned :size="26" />
           </span>
-          <h3 class="mt-5 text-xl font-semibold text-[#17201a]">从一份真实需求开始</h3>
+          <h3 class="mt-5 text-xl font-extrabold text-[#17201a]">从一份真实需求开始</h3>
           <p class="mt-3 text-sm leading-7">
             填写出发地、目的地和日期后，这里会展示按天拆分的行程、路线建议、天气参考和出行提醒。
           </p>
@@ -388,38 +400,50 @@ onMounted(() => {
       </div>
 
       <div v-else class="grid min-h-0 flex-1 gap-6 overflow-y-auto p-5 md:p-6 xl:p-8">
-        <div class="grid gap-4 rounded border border-[#d9d0bd] bg-[#f8f5ed] p-5">
-          <p class="text-sm leading-7 text-[#465144]">{{ activeTrip.result.summary }}</p>
+        <section class="grid gap-4 rounded-xl border border-[#d9d0bd] bg-[#1d3b2a] p-5 text-white md:p-6">
+          <div class="flex flex-wrap items-start justify-between gap-4">
+            <div>
+              <p class="text-sm font-bold text-[#d9ead5]">行程总览</p>
+              <h3 class="mt-2 text-2xl font-extrabold">{{ activeTrip.title }}</h3>
+            </div>
+            <span class="rounded-full bg-white/10 px-3 py-1 text-sm font-bold text-[#d9ead5]">
+              {{ activeTrip.days }} 天方案
+            </span>
+          </div>
+          <p class="max-w-5xl text-sm leading-7 text-[#eef5eb]">{{ activeTrip.result.summary }}</p>
           <div class="grid gap-3 text-sm md:grid-cols-3 xl:gap-4">
-            <div class="rounded border border-[#eadfca] bg-white p-3">
-              <p class="text-xs text-[#7a8175]">路线</p>
-              <p class="mt-1 font-semibold">{{ activeTrip.origin }} → {{ activeTrip.destination }}</p>
+            <div class="rounded-lg border border-white/15 bg-white/10 p-4">
+              <p class="text-xs text-[#d9ead5]">路线</p>
+              <p class="mt-1 font-bold">{{ activeTrip.origin }} → {{ activeTrip.destination }}</p>
             </div>
-            <div class="rounded border border-[#eadfca] bg-white p-3">
-              <p class="text-xs text-[#7a8175]">预算</p>
-              <p class="mt-1 font-semibold">{{ activeTrip.budget || '未填写' }}</p>
+            <div class="rounded-lg border border-white/15 bg-white/10 p-4">
+              <p class="text-xs text-[#d9ead5]">预算</p>
+              <p class="mt-1 font-bold">{{ activeTrip.budget || '未填写' }}</p>
             </div>
-            <div class="rounded border border-[#eadfca] bg-white p-3">
-              <p class="text-xs text-[#7a8175]">偏好</p>
-              <p class="mt-1 truncate font-semibold">
+            <div class="rounded-lg border border-white/15 bg-white/10 p-4">
+              <p class="text-xs text-[#d9ead5]">偏好</p>
+              <p class="mt-1 truncate font-bold">
                 {{ activeTrip.preferences.length ? activeTrip.preferences.join('、') : '经典景点、在地体验' }}
               </p>
             </div>
           </div>
-        </div>
+        </section>
 
         <section v-if="activeTrip.result.weather.length" class="grid gap-3">
-          <h3 class="flex items-center gap-2 font-semibold">
-            <CloudSun :size="18" />
-            天气参考
-          </h3>
+          <div class="flex items-center justify-between gap-3">
+            <h3 class="flex items-center gap-2 font-extrabold">
+              <CloudSun :size="18" />
+              天气参考
+            </h3>
+            <span class="text-xs text-[#5e675b]">用于安排户外与室内备选</span>
+          </div>
           <div class="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
             <div
               v-for="(weather, index) in activeTrip.result.weather.slice(0, activeTrip.days)"
               :key="`${weather.date ?? index}-${weather.weather ?? ''}`"
-              class="rounded border border-[#d9d0bd] bg-[#fbfaf6] p-3 text-sm"
+              class="app-card rounded-lg p-4 text-sm"
             >
-              <p class="font-semibold">{{ weather.date ?? `第 ${index + 1} 天` }}</p>
+              <p class="font-bold">{{ weather.date ?? `第 ${index + 1} 天` }}</p>
               <p class="mt-1 text-[#5e675b]">
                 {{ weather.weather ?? '天气待确认' }} · {{ weather.temperature ?? '温度待确认' }}
               </p>
@@ -427,40 +451,60 @@ onMounted(() => {
           </div>
         </section>
 
-        <article v-for="day in activeTrip.result.days" :key="day.day" class="border border-[#d9d0bd] p-5">
-          <h3 class="text-lg font-semibold">第 {{ day.day }} 天 · {{ day.theme }}</h3>
-          <div class="mt-4 grid gap-3">
+        <section class="grid gap-4">
+          <h3 class="flex items-center gap-2 font-extrabold">
+            <Clock3 :size="18" />
+            每日时间轴
+          </h3>
+          <article v-for="day in activeTrip.result.days" :key="day.day" class="app-card rounded-xl p-5">
+            <div class="flex flex-wrap items-start justify-between gap-3 border-b border-[#eadfca] pb-4">
+              <div>
+                <p class="text-sm font-bold text-[#c75532]">Day {{ day.day }}</p>
+                <h4 class="mt-1 text-lg font-extrabold">第 {{ day.day }} 天 · {{ day.theme }}</h4>
+              </div>
+              <span class="rounded-full bg-[#f8f5ed] px-3 py-1 text-xs font-bold text-[#5e675b]">
+                {{ day.schedule.length }} 个安排
+              </span>
+            </div>
+            <div class="mt-5 grid gap-0">
             <div
               v-for="item in day.schedule"
               :key="`${day.day}-${item.time}-${item.title}`"
-              class="grid gap-1 rounded border border-[#eadfca] bg-[#fbfaf6] p-3"
+                class="relative grid grid-cols-[5.75rem_minmax(0,1fr)] gap-4 border-l border-[#eadfca] pb-5 pl-5 last:pb-0"
             >
-              <p class="text-sm font-semibold text-[#c75532]">{{ item.time }} · {{ item.title }}</p>
-              <p class="text-sm leading-7 text-[#465144]">{{ item.description }}</p>
+                <span class="absolute -left-[7px] top-1 h-3.5 w-3.5 rounded-full border-2 border-white bg-[#c75532]"></span>
+                <p class="text-sm font-extrabold text-[#c75532]">{{ item.time }}</p>
+                <div class="rounded-lg bg-[#fbfaf6] p-3">
+                  <p class="text-sm font-extrabold">{{ item.title }}</p>
+                  <p class="mt-1 text-sm leading-7 text-[#465144]">{{ item.description }}</p>
+                </div>
             </div>
           </div>
-        </article>
+          </article>
+        </section>
 
         <div class="grid gap-4 lg:grid-cols-2">
-          <section v-if="activeTrip.result.route_tips.length" class="grid gap-2 rounded border border-[#d9d0bd] p-5">
-            <h3 class="flex items-center gap-2 font-semibold">
+          <section v-if="activeTrip.result.route_tips.length" class="app-card grid gap-3 rounded-xl p-5">
+            <h3 class="flex items-center gap-2 font-extrabold">
               <MapPinned :size="18" />
               路线建议
             </h3>
-            <ul class="grid gap-2 pl-5 text-sm leading-7 text-[#5e675b]">
-              <li v-for="tip in activeTrip.result.route_tips" :key="tip" class="list-disc">
+            <ul class="grid gap-2 text-sm leading-7 text-[#5e675b]">
+              <li v-for="tip in activeTrip.result.route_tips" :key="tip" class="grid grid-cols-[auto_1fr] gap-2">
+                <CheckCircle2 class="mt-1 text-[#1d3b2a]" :size="15" />
                 {{ tip }}
               </li>
             </ul>
           </section>
 
-          <section v-if="activeTrip.result.tips.length" class="grid gap-2 rounded border border-[#d9d0bd] p-5">
-            <h3 class="flex items-center gap-2 font-semibold">
+          <section v-if="activeTrip.result.tips.length" class="app-card grid gap-3 rounded-xl p-5">
+            <h3 class="flex items-center gap-2 font-extrabold">
               <WalletCards :size="18" />
               出行提醒
             </h3>
-            <ul class="grid gap-2 pl-5 text-sm leading-7 text-[#5e675b]">
-              <li v-for="tip in activeTrip.result.tips" :key="tip" class="list-disc">
+            <ul class="grid gap-2 text-sm leading-7 text-[#5e675b]">
+              <li v-for="tip in activeTrip.result.tips" :key="tip" class="grid grid-cols-[auto_1fr] gap-2">
+                <CheckCircle2 class="mt-1 text-[#c75532]" :size="15" />
                 {{ tip }}
               </li>
             </ul>
@@ -529,18 +573,3 @@ onMounted(() => {
     </Teleport>
   </main>
 </template>
-
-<style scoped>
-.form-input {
-  height: 2.75rem;
-  border: 1px solid #d9d0bd;
-  border-radius: 6px;
-  background: #fff;
-  padding: 0 0.75rem;
-  outline: none;
-}
-
-.form-input:focus {
-  border-color: #1d3b2a;
-}
-</style>
